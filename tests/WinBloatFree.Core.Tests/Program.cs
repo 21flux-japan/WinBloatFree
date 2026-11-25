@@ -604,10 +604,7 @@ static class Tests
 
     public static void AboutTextIsInTheReadme()
     {
-        static string Lines(string s) => s.Replace("
-", "
-").Replace('', '
-');
+        static string Lines(string s) => s.Replace("\r\n", "\n").Replace("\r", "\n");
         var readme = Lines(File.ReadAllText(Path.Combine(FindRoot(), "README.md")));
         Assert.True(readme.Contains(About.Title), "README has the heading");
         Assert.True(readme.Contains(Lines(About.Body)), "README has the same wording");
