@@ -23,6 +23,8 @@ public enum ActionType
     OneDriveUninstall,
     /// <summary>Set a DWORD in the NVIDIA driver global profile (NVIDIA only).</summary>
     NvidiaDrs,
+    /// <summary>Record that System Restore was turned on. Not used in the catalog.</summary>
+    SystemRestore,
 }
 
 public enum RegHive { HKLM, HKCU }
@@ -38,6 +40,8 @@ public enum MatchMode
     Equals,
     /// <summary>Applied when the value exists at all (used for time stamps).</summary>
     Exists,
+    /// <summary>Applied when the value equals the wanted value, or is not set (used when "not set" means the same as the default).</summary>
+    EqualsOrAbsent,
 }
 
 public enum Preset { Recommended, Privacy, Everything, Custom }

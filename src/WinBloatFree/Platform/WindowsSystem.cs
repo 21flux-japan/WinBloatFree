@@ -68,45 +68,16 @@ public sealed class WindowsSystem : ISystemAccess
         };
     }
 
-    public void WriteRegistry(RegHive hive, string key, string name, RegKind kind, string data)
-    {
-        using var root = Root(hive);
-        using var k = root.CreateSubKey(key, writable: true) ?? throw new IOException($"Could not open {hive}\\{key}.");
-        switch (kind)
-        {
-            case RegKind.DWord:
-                if (!RegValues.TryParseNumber(data, out var d)) throw new FormatException($"Not a number: {data}");
-                k.SetValue(name, unchecked((int)(uint)d), RegistryValueKind.DWord);
-                break;
-            case RegKind.QWord:
-                if (!RegValues.TryParseNumber(data, out var q)) throw new FormatException($"Not a number: {data}");
-                k.SetValue(name, unchecked((long)q), RegistryValueKind.QWord);
-                break;
-            case RegKind.ExpandString: k.SetValue(name, data, RegistryValueKind.ExpandString); break;
-            case RegKind.MultiString: k.SetValue(name, data.Length == 0 ? Array.Empty<string>() : data.Split('\n'), RegistryValueKind.MultiString); break;
-            case RegKind.Binary: k.SetValue(name, Convert.FromHexString(data), RegistryValueKind.Binary); break;
-            default: k.SetValue(name, data, RegistryValueKind.String); break;
-        }
-    }
+    public void WriteRegistry(RegHive hive, string key, string name, RegKind kind, string data) =>
+        RegistryIO.SetValue(hive, key, name, kind, data);
 
-    public void DeleteRegistryValue(RegHive hive, string key, string name)
-    {
-        using var root = Root(hive);
-        using var k = root.OpenSubKey(key, writable: true);
-        k?.DeleteValue(name, throwOnMissingValue: false);
-    }
+    public void DeleteRegistryValue(RegHive hive, string key, string name) =>
+        RegistryIO.DeleteValue(hive, key, name);
 
-    public void DeleteKeyIfEmpty(RegHive hive, string key)
-    {
-        using var root = Root(hive);
-        using (var k = root.OpenSubKey(key))
-        {
-            if (k is null || k.ValueCount > 0 || k.SubKeyCount > 0) return;
-        }
-        root.DeleteSubKey(key, throwOnMissingSubKey: false);
-    }
+    public void DeleteKeyIfEmpty(RegHive hive, string key) =>
+        RegistryIO.DeleteKeyIfEmpty(hive, key);
 
-    // ------------------------------------------------------------------ services
+        // ------------------------------------------------------------------ services
 
     public ServiceSnapshot GetService(string name) => Services.Get(name);
 
@@ -210,26 +181,49 @@ public sealed class WindowsSystem : ISystemAccess
     {
         LoadPackages();
         var errors = new List<string>();
+        var details = new List<string>();
         foreach (var p in _installed!.Where(p => Wildcard.IsMatch(p.Name, pattern)).ToList())
         {
             try
             {
                 var r = _pm.RemovePackageAsync(p.FullName, RemovalOptions.RemoveForAllUsers).AsTask().GetAwaiter().GetResult();
-                if (r.ExtendedErrorCode is not null && r.ExtendedErrorCode.HResult != 0) errors.Add($"{p.Name}: {r.ErrorText}");
+                int hr = r.ExtendedErrorCode?.HResult ?? 0;
+                if (hr != 0 && !AppxErrors.IsAlreadyDone(hr, r.ErrorText))
+                {
+                    errors.Add(AppxErrors.ShortRemoveFailure(p.Name, forNewUsers: false));
+                    if (!string.IsNullOrEmpty(r.ErrorText)) details.Add(p.FullName + ": " + r.ErrorText);
+                }
             }
-            catch (Exception ex) { errors.Add($"{p.Name}: {ex.Message}"); }
+            catch (Exception ex) when (AppxErrors.IsAlreadyDone(ex)) { }
+            catch (Exception ex)
+            {
+                errors.Add(AppxErrors.ShortRemoveFailure(p.Name, forNewUsers: false));
+                details.Add(p.FullName + ": " + ex.Message);
+            }
         }
-        foreach (var fam in _installed!.Concat(_provisioned!).Where(p => Wildcard.IsMatch(p.Name, pattern)).Select(p => p.Family).Distinct().ToList())
+        // Only deprovision packages that are actually provisioned for new users.
+        foreach (var fam in _provisioned!.Where(p => Wildcard.IsMatch(p.Name, pattern)).Select(p => p.Family).Distinct().ToList())
         {
             try
             {
                 var r = _pm.DeprovisionPackageForAllUsersAsync(fam).AsTask().GetAwaiter().GetResult();
-                if (r.ExtendedErrorCode is not null && r.ExtendedErrorCode.HResult != 0) errors.Add($"{fam} (new users): {r.ErrorText}");
+                int hr = r.ExtendedErrorCode?.HResult ?? 0;
+                if (hr != 0 && !AppxErrors.IsAlreadyDone(hr, r.ErrorText))
+                {
+                    errors.Add(AppxErrors.ShortRemoveFailure(fam, forNewUsers: true));
+                    if (!string.IsNullOrEmpty(r.ErrorText)) details.Add(fam + " (new users): " + r.ErrorText);
+                }
             }
-            catch (Exception ex) { errors.Add($"{fam} (new users): {ex.Message}"); }
+            catch (Exception ex) when (AppxErrors.IsAlreadyDone(ex)) { }
+            catch (Exception ex)
+            {
+                errors.Add(AppxErrors.ShortRemoveFailure(fam, forNewUsers: true));
+                details.Add(fam + " (new users): " + ex.Message);
+            }
         }
         lock (_appxLock) { _installed = null; _provisioned = null; }
-        if (errors.Count > 0) throw new IOException(string.Join(" ", errors));
+        if (errors.Count > 0)
+            throw new DetailedException(string.Join(" ", errors), details.Count > 0 ? string.Join("\n", details) : null);
     }
 
     // ------------------------------------------------------------------ OneDrive

@@ -44,9 +44,10 @@ public sealed class RelayCommand : ICommand
 }
 
 /// <summary>One line in the "What changes" box.</summary>
-public sealed record ChangeLine(string Label, string Target, string From, string To)
+public sealed record ChangeLine(string Label, string Target, string From, string To, string Status = "")
 {
     public bool HasFrom => From.Length > 0;
+    public bool HasStatus => Status.Length > 0;
 }
 
 public sealed class TweakVM : Observable
@@ -125,7 +126,7 @@ public sealed class TweakVM : Observable
         set
         {
             _detection = value;
-            Raise(nameof(Detection), nameof(Status), nameof(StatusText), nameof(StatusMuted), nameof(IsAvailable), nameof(Changes), nameof(ShowLevelStatus));
+            Raise(nameof(Detection), nameof(Status), nameof(StatusText), nameof(StatusMuted), nameof(IsAvailable), nameof(Changes), nameof(ShowLevelStatus), nameof(ShowPartialParts), nameof(PartialHint));
         }
     }
 
@@ -139,6 +140,9 @@ public sealed class TweakVM : Observable
     public bool IsAvailable => Status is not (TweakStatus.NotPresent or TweakStatus.NotApplicable or TweakStatus.CheckFailed);
 
     public bool StatusMuted => Status is TweakStatus.Off or TweakStatus.NotPresent or TweakStatus.NotApplicable or TweakStatus.CheckFailed;
+
+    public bool ShowPartialParts => Status is TweakStatus.Partial;
+    public string PartialHint => "Some parts are already done. The ones marked Still on will change when you apply.";
 
     public string StatusText => Status switch
     {
@@ -161,7 +165,7 @@ public sealed class TweakVM : Observable
         get
         {
             if (_detection.Actions.Count > 0)
-                return _detection.Actions.Select(a => new ChangeLine(a.Label, a.Target, a.Present && !a.Failed ? a.Current : "", a.Failed ? a.Current : a.Present ? a.Wanted : "Skipped: " + a.Current)).ToList();
+                return _detection.Actions.Select(a => new ChangeLine(a.Label, a.Target, a.Present && !a.Failed ? a.Current : "", a.Failed ? a.Current : a.Present ? a.Wanted : "Skipped: " + a.Current, Engine.ActionStatusText(a))).ToList();
             return Tweak.Actions.Select(a => new ChangeLine(Engine.Label(a.Type), Engine.Target(a), "", Describe(a))).ToList();
         }
     }

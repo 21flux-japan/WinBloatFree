@@ -48,14 +48,16 @@ public sealed class MainViewModel : Observable
         ShowJsonCommand = new RelayCommand(() => { if (FocusedTweak is not null) IsJsonOpen = true; });
         CloseJsonCommand = new RelayCommand(() => IsJsonOpen = false);
         UndoRunCommand = new RelayCommand(p => { if (p is RunVM r) AskUndo(r); }, p => p is RunVM r && r.CanUndo && !IsBusy);
-        ConfirmOkCommand = new RelayCommand(() => { IsConfirmOpen = false; var a = _confirmAction; _confirmAction = null; a?.Invoke(); });
-        ConfirmCancelCommand = new RelayCommand(() => { IsConfirmOpen = false; _confirmAction = null; });
+        ConfirmOkCommand = new RelayCommand(() => CompleteConfirm(true));
+        ConfirmCancelCommand = new RelayCommand(() => CompleteConfirm(false));
+        RestartNowCommand = new RelayCommand(AskRestart, () => !IsBusy && IsResultDone && ResultNeedsRestart);
         OpenRepoCommand = new RelayCommand(() => OpenUrl(RepoUrl));
         OpenIssuesCommand = new RelayCommand(() => OpenUrl(RepoUrl + "/issues"));
         OpenHistoryFolderCommand = new RelayCommand(() => OpenFolder(_store.Directory));
         RefreshCommand = new RelayCommand(async () => await DetectAllAsync(), () => !IsBusy);
         ToggleThemeCommand = new RelayCommand(() => IsDark = !IsDark);
 
+        RefreshRestoreState(setDefault: true);
         ApplyPreset(Preset.Recommended);
         ShowCategory(Categories[0]);
         LoadHistory();
@@ -230,7 +232,17 @@ public sealed class MainViewModel : Observable
     }
 
     IReadOnlyList<Tweak> PendingTweaks() =>
-        Review.Pending(_catalog, SelectedIds(), t => _byId[t.Id].Status);
+        Review.Pending(_catalog, SelectedIds(), t => _byId[t.Id].Status, PauseNeedsRefresh);
+
+    bool PauseNeedsRefresh(Tweak t)
+    {
+        if (t.Id != "updates.level.pause") return true;
+        var vm = _byId[t.Id];
+        var expiry = vm.Detection.Actions.FirstOrDefault(a => a.Current.Contains("PauseUpdatesExpiryTime", StringComparison.OrdinalIgnoreCase))?.Current;
+        var weeks = PauseLength.WeeksRemaining(expiry, DateTime.UtcNow);
+        if (weeks is null) return false;
+        return weeks.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) != (vm.ParameterValue ?? t.Parameter?.Default);
+    }
 
     public int PendingCount { get; private set; }
     public string PendingText => PendingCount == 1 ? "1 change" : $"{PendingCount} changes";
@@ -248,8 +260,23 @@ public sealed class MainViewModel : Observable
         CommandManager.InvalidateRequerySuggested();
     }
 
+    bool _restoreEnabled = true;
     bool _restorePoint = true;
-    public bool CreateRestorePoint { get => _restorePoint; set => Set(ref _restorePoint, value); }
+    public bool CreateRestorePoint
+    {
+        get => _restorePoint;
+        set { if (Set(ref _restorePoint, value)) Raise(nameof(ReviewBackupText)); }
+    }
+    public string RestoreCheckLabel => BackupCopy.CheckLabel(_restoreEnabled);
+    public string RestoreCheckHint => BackupCopy.CheckHint(_restoreEnabled);
+    public string ReviewBackupText => BackupCopy.ReviewText(CreateRestorePoint, _restoreEnabled);
+
+    void RefreshRestoreState(bool setDefault = false)
+    {
+        _restoreEnabled = RestorePoint.IsEnabled();
+        if (setDefault) _restorePoint = _restoreEnabled;
+        Raise(nameof(RestoreCheckLabel), nameof(RestoreCheckHint), nameof(ReviewBackupText), nameof(CreateRestorePoint));
+    }
 
     // ------------------------------------------------------------------ detection
 
@@ -269,17 +296,37 @@ public sealed class MainViewModel : Observable
             vm.Detection = det;
             if (!vm.IsAvailable && vm.IsChecked && !vm.IsLevel) vm.SetChecked(false);
         }
-        // If a level is already in place, show it as the chosen one.
-        foreach (var c in Categories.Where(c => c.IsUpdates))
+        if (!_appliedStartupSelection)
         {
-            var active = c.Levels.FirstOrDefault(l => !l.IsLeaveAsIs && l.Status == TweakStatus.Off);
-            if (active is not null && !c.Levels.Any(l => l.IsChecked && !l.IsLeaveAsIs))
-            {
-                foreach (var l in c.Levels) l.SetChecked(l == active);
-            }
+            ApplyStartupSelection();
+            _appliedStartupSelection = true;
         }
+        RefreshRestoreState();
         StatusLine = "Already applied changes are skipped";
         OnSelectionChanged();
+    }
+
+    bool _appliedStartupSelection;
+
+    void ApplyStartupSelection()
+    {
+        SyncPauseLengthFromDetection();
+        var ids = Presets.SelectDefault(_catalog, Preset.Recommended, t => _byId[t.Id].Status);
+        _suppress = true;
+        foreach (var t in _byId.Values) t.SetChecked(ids.Contains(t.Id));
+        foreach (var t in _byId.Values.Where(t => !t.IsAvailable && t.IsChecked && !t.IsLevel)) t.SetChecked(false);
+        _suppress = false;
+        Preset = Presets.Match(_catalog, SelectedIds());
+    }
+
+    void SyncPauseLengthFromDetection()
+    {
+        if (!_byId.TryGetValue("updates.level.pause", out var vm)) return;
+        var expiry = vm.Detection.Actions.FirstOrDefault(a => a.Current.Contains("PauseUpdatesExpiryTime", StringComparison.OrdinalIgnoreCase))?.Current;
+        var weeks = PauseLength.WeeksRemaining(expiry, DateTime.UtcNow);
+        if (weeks is null) return;
+        var opt = vm.Options.FirstOrDefault(o => o.Value == weeks.Value.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        if (opt is not null) vm.SelectedOption = opt;
     }
 
     // ------------------------------------------------------------------ review dialog
@@ -316,7 +363,8 @@ public sealed class MainViewModel : Observable
         ReviewGroups = sum.Groups.Select((g, i) => new ReviewGroupVM(g.CategoryName, g.Tweaks.Select(t => _byId[t.Id]).ToList(), i == 0)).ToList();
         ReviewWarnings = pending.Where(t => t.Warning is not null).Select(t => $"{t.Name}: {t.Warning}").ToList();
         Raise(nameof(ReviewTitle), nameof(ReviewSafe), nameof(ReviewModerate), nameof(ReviewAdvanced), nameof(ReviewHasModerate), nameof(ReviewHasAdvanced),
-              nameof(ReviewRestart), nameof(ReviewHasRestart), nameof(ApplyText), nameof(ReviewGroups), nameof(ReviewWarnings), nameof(ReviewHasWarnings));
+              nameof(ReviewRestart), nameof(ReviewHasRestart), nameof(ApplyText), nameof(ReviewGroups), nameof(ReviewWarnings), nameof(ReviewHasWarnings),
+              nameof(ReviewBackupText), nameof(RestoreCheckLabel), nameof(RestoreCheckHint));
         IsReviewOpen = true;
     }
 
@@ -325,7 +373,7 @@ public sealed class MainViewModel : Observable
     bool _resultOpen;
     public bool IsResultOpen { get => _resultOpen; set => Set(ref _resultOpen, value); }
     bool _resultDone;
-    public bool IsResultDone { get => _resultDone; private set => Set(ref _resultDone, value); }
+    public bool IsResultDone { get => _resultDone; private set { if (Set(ref _resultDone, value)) Raise(nameof(ShowRestartButtons), nameof(ShowResultClose)); } }
     string _resultTitle = "", _resultText = "", _progressText = "";
     public string ResultTitle { get => _resultTitle; private set => Set(ref _resultTitle, value); }
     public string ResultText { get => _resultText; private set => Set(ref _resultText, value); }
@@ -333,6 +381,39 @@ public sealed class MainViewModel : Observable
     double _progress;
     public double ProgressValue { get => _progress; private set => Set(ref _progress, value); }
     public ObservableList<string> ResultLines { get; } = new();
+    public ObservableList<string> ResultAlreadyDone { get; } = new();
+    public ObservableList<string> ResultDetails { get; } = new();
+    public bool HasResultFailures => ResultLines.Count > 0;
+    public bool HasResultAlreadyDone => ResultAlreadyDone.Count > 0;
+    public bool HasResultDetails => ResultDetails.Count > 0;
+    bool _resultNeedsRestart;
+    public bool ResultNeedsRestart
+    {
+        get => _resultNeedsRestart;
+        private set
+        {
+            if (Set(ref _resultNeedsRestart, value))
+                Raise(nameof(ShowRestartButtons), nameof(ShowResultClose));
+        }
+    }
+    public bool ShowRestartButtons => IsResultDone && ResultNeedsRestart;
+    public bool ShowResultClose => IsResultDone && !ResultNeedsRestart;
+
+    void ClearResultLists()
+    {
+        ResultLines.ReplaceAll(Array.Empty<string>());
+        ResultAlreadyDone.ReplaceAll(Array.Empty<string>());
+        ResultDetails.ReplaceAll(Array.Empty<string>());
+        Raise(nameof(HasResultFailures), nameof(HasResultAlreadyDone), nameof(HasResultDetails));
+    }
+
+    void SetResultLists(IEnumerable<string> failures, IEnumerable<string>? alreadyDone = null, IEnumerable<string>? details = null)
+    {
+        ResultLines.ReplaceAll(failures);
+        ResultAlreadyDone.ReplaceAll(alreadyDone ?? Array.Empty<string>());
+        ResultDetails.ReplaceAll(details ?? Array.Empty<string>());
+        Raise(nameof(HasResultFailures), nameof(HasResultAlreadyDone), nameof(HasResultDetails));
+    }
 
     async Task ApplyAsync()
     {
@@ -341,27 +422,51 @@ public sealed class MainViewModel : Observable
         IsReviewOpen = false;
         IsBusy = true;
         IsResultDone = false;
-        ResultLines.ReplaceAll(Array.Empty<string>());
+        ClearResultLists();
         ResultTitle = "Applying changes";
         ResultText = "Please keep this window open.";
         ProgressValue = 0;
         IsResultOpen = true;
 
         var parameters = pending.Where(t => t.Parameter is not null).ToDictionary(t => t.Id, t => _byId[t.Id].ParameterValue ?? t.Parameter!.Default);
+        ClearResultLists();
+        ResultNeedsRestart = false;
         bool wantRestorePoint = CreateRestorePoint;
+        bool restoreWasOn = _restoreEnabled;
+        bool enabledRestore = false;
+        bool createdRestore = false;
         string? restoreError = null;
+        string drive = RestorePoint.SystemDrive;
         try
         {
             if (wantRestorePoint)
             {
-                ProgressText = "Creating a restore point. This can take a minute.";
-                restoreError = await Task.Run(() => RestorePoint.Create($"WinBloatFree {AppVersion}, before {pending.Count} changes"));
-                if (restoreError is not null)
+                if (!restoreWasOn)
                 {
-                    ResultTitle = "Nothing was changed";
-                    ResultText = "The restore point could not be created: " + restoreError;
-                    IsResultDone = true;
-                    return;
+                    ProgressText = "Turning on System Restore for the system drive.";
+                    restoreError = await Task.Run(RestorePoint.Enable);
+                    if (restoreError is null)
+                    {
+                        enabledRestore = true;
+                        _restoreEnabled = true;
+                        Raise(nameof(RestoreCheckLabel), nameof(RestoreCheckHint), nameof(ReviewBackupText));
+                    }
+                }
+                if (restoreError is null)
+                {
+                    ProgressText = "Creating a restore point. This can take a minute.";
+                    restoreError = await Task.Run(() => RestorePoint.Create($"WinBloatFree {AppVersion}, before {pending.Count} changes"));
+                }
+                if (restoreError is null) createdRestore = true;
+                else
+                {
+                    bool cont = await ConfirmAsync("Could not create a restore point", BackupCopy.CreateFailedText(restoreError), "Continue without it");
+                    if (!cont)
+                    {
+                        if (enabledRestore) SaveRestoreEnableOnly(drive, restoreError);
+                        IsResultOpen = false;
+                        return;
+                    }
                 }
             }
 
@@ -373,23 +478,24 @@ public sealed class MainViewModel : Observable
             bool first = true;
             var run = await Task.Run(() => _engine.Apply(pending, parameters, AppVersion, r =>
             {
-                if (first) { _store.EnsureUniqueId(r); r.RestorePointCreated = wantRestorePoint; r.RestorePointNote = wantRestorePoint ? null : "No restore point (turned off)"; first = false; }
+                if (first)
+                {
+                    _store.EnsureUniqueId(r);
+                    r.RestorePointCreated = createdRestore;
+                    r.RestorePointNote = createdRestore ? null : (restoreError is not null ? "No restore point: " + restoreError : "No restore point (not requested)");
+                    if (enabledRestore) r.Entries.Insert(0, Engine.SystemRestoreEnabledEntry(drive));
+                    first = false;
+                }
                 _store.Save(r);
             }, progress));
 
-            var failed = run.Entries.Where(e => e.Result == EntryResult.Failed).ToList();
-            ResultTitle = failed.Count == 0 ? "Done" : "Done, with some problems";
-            var restart = pending.Any(t => t.Restart);
-            ResultText = $"{run.ChangedCount} changed, {run.Entries.Count(e => e.Result == EntryResult.Skipped)} already in place or not on this PC, {failed.Count} failed."
-                         + (restart ? " Restart the PC to finish some changes." : " Some changes show after you sign out and back in.")
-                         + " You can undo this run in Undo / History.";
-            ResultLines.ReplaceAll(failed.Select(f => $"{f.TweakName}: {f.Target}. {f.Message}"));
-            IsResultDone = true;
+            ShowApplyResult(run);
         }
         catch (Exception ex)
         {
             ResultTitle = "Something went wrong";
             ResultText = ex.Message + " Changes made before the problem are saved in Undo / History.";
+            ResultNeedsRestart = false;
             IsResultDone = true;
         }
         finally
@@ -414,6 +520,7 @@ public sealed class MainViewModel : Observable
         ConfirmTitle = title;
         ConfirmText = text;
         ConfirmOkText = ok;
+        _confirmTcs = null;
         _confirmAction = action;
         Raise(nameof(ConfirmTitle), nameof(ConfirmText), nameof(ConfirmOkText));
         IsConfirmOpen = true;
@@ -437,19 +544,23 @@ public sealed class MainViewModel : Observable
         ResultText = "Please keep this window open.";
         ProgressText = "";
         ProgressValue = 0.5;
-        ResultLines.ReplaceAll(Array.Empty<string>());
+        ClearResultLists();
+        ResultNeedsRestart = false;
         IsResultOpen = true;
         try
         {
             var rep = await Task.Run(() => { var x = _engine.Undo(r.Run); _store.Save(r.Run); return x; });
             ResultTitle = rep.Failed == 0 ? "Undo finished" : "Undo finished, with some problems";
-            ResultText = $"{rep.Restored} restored, {rep.Manual} need a manual step, {rep.Failed} failed. Restart the PC to make sure every setting is back.";
-            ResultLines.ReplaceAll(rep.Messages);
+            bool needsRestart = RunSummary.NeedsRestartAfterUndo(r.Run.Entries, id => _catalog.Find(id)?.Restart == true);
+            ResultNeedsRestart = needsRestart;
+            ResultText = RunSummary.AfterUndo(rep, needsRestart);
+            SetResultLists(rep.Messages);
         }
         catch (Exception ex)
         {
             ResultTitle = "Something went wrong";
             ResultText = ex.Message;
+            ResultNeedsRestart = false;
         }
         finally
         {
@@ -460,6 +571,79 @@ public sealed class MainViewModel : Observable
             LoadHistory();
             await DetectAllAsync();
         }
+    }
+
+    void ShowApplyResult(RunRecord run)
+    {
+        var failed = run.Entries.Where(e => e.Result == EntryResult.Failed).ToList();
+        // Only list skips that would previously have looked like failures (for example a deprovision that was already gone).
+        var already = run.Entries.Where(e => e.Result == EntryResult.Skipped && AppxErrors.IsAlreadyDone(0, e.Message)).ToList();
+        bool needsRestart = RunSummary.NeedsRestart(run, id => _catalog.Find(id)?.Restart == true);
+        ResultNeedsRestart = needsRestart;
+        ResultTitle = failed.Count == 0 ? "Done" : "Done, with some problems";
+        ResultText = RunSummary.AfterApply(run, needsRestart, RunSummary.AppRemovalPendingRestart(run));
+        SetResultLists(
+            failed.Select(RunSummary.FailureLine),
+            already.Count == 0 ? null : already.Select(RunSummary.AlreadyDoneLine),
+            failed.Where(e => !string.IsNullOrEmpty(e.Details) || RunSummary.IsTechnical(e.Message)).Select(e => e.Details ?? e.Message ?? ""));
+        IsResultDone = true;
+    }
+
+    void SaveRestoreEnableOnly(string drive, string restoreError)
+    {
+        var now = DateTimeOffset.Now;
+        var run = new RunRecord
+        {
+            Id = now.ToString("yyyyMMdd-HHmmss", System.Globalization.CultureInfo.InvariantCulture),
+            StartedAt = now,
+            FinishedAt = now,
+            Windows = _sys.Info.FriendlyName,
+            AppVersion = AppVersion,
+            RestorePointCreated = false,
+            RestorePointNote = "System Restore was turned on. The restore point could not be created and no tweaks were applied: " + restoreError,
+        };
+        run.Entries.Add(Engine.SystemRestoreEnabledEntry(drive));
+        _store.EnsureUniqueId(run);
+        _store.Save(run);
+        LoadHistory();
+    }
+
+    TaskCompletionSource<bool>? _confirmTcs;
+
+    void CompleteConfirm(bool ok)
+    {
+        IsConfirmOpen = false;
+        var action = _confirmAction;
+        var tcs = _confirmTcs;
+        _confirmAction = null;
+        _confirmTcs = null;
+        if (ok) action?.Invoke();
+        tcs?.TrySetResult(ok);
+    }
+
+    Task<bool> ConfirmAsync(string title, string text, string ok)
+    {
+        var tcs = new TaskCompletionSource<bool>();
+        _confirmTcs = tcs;
+        _confirmAction = null;
+        ConfirmTitle = title;
+        ConfirmText = text;
+        ConfirmOkText = ok;
+        Raise(nameof(ConfirmTitle), nameof(ConfirmText), nameof(ConfirmOkText));
+        IsConfirmOpen = true;
+        return tcs.Task;
+    }
+
+    void AskRestart()
+    {
+        Confirm("Restart now?", "Save your work in other apps first.", "Restart now", () =>
+        {
+            try { SystemRestart.Reboot(); }
+            catch (Exception ex)
+            {
+                ResultText = "Windows could not be restarted: " + ex.Message + " You can restart from the Start menu.";
+            }
+        });
     }
 
     // ------------------------------------------------------------------ JSON view and links
@@ -510,11 +694,12 @@ public sealed class MainViewModel : Observable
     public ICommand OpenHistoryFolderCommand { get; }
     public ICommand RefreshCommand { get; }
     public ICommand ToggleThemeCommand { get; }
+    public ICommand RestartNowCommand { get; }
 
     /// <summary>Closes the top-most overlay. Returns false when none was open.</summary>
     public bool CloseTopOverlay()
     {
-        if (IsConfirmOpen) { IsConfirmOpen = false; return true; }
+        if (IsConfirmOpen) { CompleteConfirm(false); return true; }
         if (IsJsonOpen) { IsJsonOpen = false; return true; }
         if (IsResultOpen && IsResultDone) { IsResultOpen = false; return true; }
         if (IsReviewOpen) { IsReviewOpen = false; return true; }

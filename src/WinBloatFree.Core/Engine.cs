@@ -40,6 +40,8 @@ public sealed class BackupEntry
     public string Target { get; set; } = "";
     public EntryResult Result { get; set; }
     public string? Message { get; set; }
+    /// <summary>Optional longer technical text, shown under a details expander.</summary>
+    public string? Details { get; set; }
 
     public RegHive? Hive { get; set; }
     public string? Key { get; set; }
@@ -117,6 +119,24 @@ public sealed class Engine
         return applied == 0 ? TweakStatus.On : TweakStatus.Partial;
     }
 
+    /// <summary>Short per-action label for the details pane.</summary>
+    public static string ActionStatusText(ActionState s)
+    {
+        if (s.Failed) return "Could not check";
+        if (!s.Present) return "Not on this PC";
+        return s.Applied ? "Done" : "Still on";
+    }
+
+    public static BackupEntry SystemRestoreEnabledEntry(string drive) => new()
+    {
+        TweakId = "system-restore.enable",
+        TweakName = "Turn on System Restore",
+        Type = ActionType.SystemRestore,
+        Target = drive,
+        Result = EntryResult.Changed,
+        Message = "Turned on for the system drive.",
+    };
+
     public static string Label(ActionType t) => t switch
     {
         ActionType.Registry or ActionType.RegistryDelete or ActionType.RegistryToken => "REGISTRY",
@@ -125,6 +145,7 @@ public sealed class Engine
         ActionType.Appx => "APP PACKAGE",
         ActionType.OneDriveUninstall => "PROGRAM",
         ActionType.NvidiaDrs => "NVIDIA DRIVER PROFILE",
+        ActionType.SystemRestore => "SYSTEM RESTORE",
         _ => t.ToString().ToUpperInvariant(),
     };
 
@@ -136,6 +157,7 @@ public sealed class Engine
         ActionType.Appx => a.Package!,
         ActionType.OneDriveUninstall => "Microsoft OneDrive",
         ActionType.NvidiaDrs => "Global profile, setting 0x" + a.SettingId.ToString("X8", CultureInfo.InvariantCulture),
+        ActionType.SystemRestore => "",
         _ => "",
     };
 
@@ -150,7 +172,12 @@ public sealed class Engine
             {
                 var cur = _sys.ReadRegistry(a.Hive, a.Key!, a.Name!);
                 var want = Placeholders.Resolve(a.Value!, ctx);
-                bool ok = a.Match == MatchMode.Exists ? cur.Exists : cur.Exists && RegValues.SameData(a.Kind, cur.Data, want);
+                bool ok = a.Match switch
+                {
+                    MatchMode.Exists => cur.Exists,
+                    MatchMode.EqualsOrAbsent => !cur.Exists || RegValues.SameData(a.Kind, cur.Data, want),
+                    _ => cur.Exists && RegValues.SameData(a.Kind, cur.Data, want),
+                };
                 return new(i, a.Type, label, target, true, ok, $"{a.Name} = {RegValues.Display(cur)}", a.Match == MatchMode.Exists ? "date and time" : DisplayWanted(a.Kind, want));
             }
             case ActionType.RegistryDelete:
@@ -182,7 +209,14 @@ public sealed class Engine
             {
                 var p = _sys.GetAppx(a.Package!);
                 if (!p.Present) return new(i, a.Type, label, target, false, true, "not installed", "Removed");
-                return new(i, a.Type, label, target, true, false, p.Installed ? "Installed" : "Provisioned for new users", "Removed for all users");
+                string cur = (p.Installed, p.Provisioned) switch
+                {
+                    (true, true) => "Installed and provisioned for new users",
+                    (true, false) => "Installed",
+                    (false, true) => "Provisioned for new users",
+                    _ => "not installed",
+                };
+                return new(i, a.Type, label, target, true, false, cur, "Removed for all users");
             }
             case ActionType.OneDriveUninstall:
             {
@@ -235,7 +269,12 @@ public sealed class Engine
                 else
                 {
                     try { ApplyAction(a, entry, ctx); }
-                    catch (Exception ex) { entry.Result = EntryResult.Failed; entry.Message = ex.Message; }
+                    catch (Exception ex)
+                    {
+                        entry.Result = EntryResult.Failed;
+                        entry.Message = ex.Message;
+                        if (ex is DetailedException de && !string.IsNullOrEmpty(de.Details)) entry.Details = de.Details;
+                    }
                 }
                 run.Entries.Add(entry);
                 done++;
@@ -266,7 +305,9 @@ public sealed class Engine
                 var cur = _sys.ReadRegistry(a.Hive, a.Key!, a.Name!);
                 var want = Placeholders.Resolve(a.Value!, ctx);
                 // Time stamps (Match = Exists) are always written again so a new pause starts from now.
-                bool already = a.Match != MatchMode.Exists && cur.Exists && cur.Kind == a.Kind && RegValues.SameData(a.Kind, cur.Data, want);
+                bool already = a.Match != MatchMode.Exists && (
+                    (cur.Exists && cur.Kind == a.Kind && RegValues.SameData(a.Kind, cur.Data, want))
+                    || (a.Match == MatchMode.EqualsOrAbsent && !cur.Exists));
                 if (already) { e.Message = "Already set."; return; }
                 e.PreviousRegistry = cur;
                 _sys.WriteRegistry(a.Hive, a.Key!, a.Name!, a.Kind, want);
@@ -373,6 +414,14 @@ public sealed class Engine
         {
             try
             {
+                if (e.Type == ActionType.SystemRestore)
+                {
+                    e.Undone = true;
+                    e.UndoMessage = "System Restore was left on so any restore points stay available. You can turn it off in System Properties > System Protection if you want.";
+                    manual++;
+                    messages.Add($"{e.TweakName}: {e.UndoMessage}");
+                    continue;
+                }
                 bool done = UndoEntry(e);
                 if (done) { e.Undone = true; restored++; }
                 else { manual++; messages.Add($"{e.TweakName}: {e.UndoMessage}"); }

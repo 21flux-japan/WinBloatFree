@@ -149,3 +149,32 @@ public static class CommandLine
         return sp < 0 ? (s, "") : (s[..sp], s[(sp + 1)..].Trim());
     }
 }
+
+/// <summary>Reads the length of an existing Windows Update pause from an expiry time stamp.</summary>
+public static class PauseLength
+{
+    static readonly Regex Stamp = new(@"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?", RegexOptions.CultureInvariant);
+
+    public static int? WeeksRemaining(string? expiryText, DateTime utcNow)
+    {
+        if (string.IsNullOrEmpty(expiryText)) return null;
+        var m = Stamp.Match(expiryText);
+        if (!m.Success) return null;
+        if (!DateTime.TryParse(m.Value, CultureInfo.InvariantCulture,
+                DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var end))
+            return null;
+        double days = (end - utcNow.ToUniversalTime()).TotalDays;
+        if (days <= 0.5) return null;
+        int weeks = (int)Math.Round(days / 7.0, MidpointRounding.AwayFromZero);
+        if (weeks < 1) return 1;
+        if (weeks > 5) return 5;
+        return weeks;
+    }
+
+    public static bool MatchesSelectedWeeks(string? expiryText, string? weeks, DateTime utcNow)
+    {
+        var w = WeeksRemaining(expiryText, utcNow);
+        return w is int n && weeks == n.ToString(CultureInfo.InvariantCulture);
+    }
+}
+

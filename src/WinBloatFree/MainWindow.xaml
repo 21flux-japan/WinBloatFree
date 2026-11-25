@@ -431,6 +431,8 @@
 
                                 <TextBlock Text="What changes" Style="{StaticResource SectionLabel}" Margin="0,18,0,6"
                                            Visibility="{Binding Changes, Converter={StaticResource NotEmptyToVis}}" />
+                                <TextBlock Text="{Binding PartialHint}" Style="{StaticResource Caption}" Margin="0,0,0,6"
+                                           Visibility="{Binding ShowPartialParts, Converter={StaticResource BoolToVis}}" />
                                 <Border Background="{DynamicResource Code}" BorderBrush="{DynamicResource CardBorder}" BorderThickness="1" CornerRadius="6"
                                         Visibility="{Binding Changes, Converter={StaticResource NotEmptyToVis}}">
                                     <ItemsControl ItemsSource="{Binding Changes}">
@@ -438,7 +440,11 @@
                                             <DataTemplate>
                                                 <Border BorderBrush="{DynamicResource CardBorder}" BorderThickness="0,0,0,1" Padding="10,8">
                                                     <StackPanel>
-                                                        <TextBlock Text="{Binding Label}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Text3}" />
+                                                        <Grid>
+                                                            <TextBlock Text="{Binding Label}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Text3}" />
+                                                            <TextBlock Text="{Binding Status}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Text2}" HorizontalAlignment="Right"
+                                                                       Visibility="{Binding HasStatus, Converter={StaticResource BoolToVis}}" />
+                                                        </Grid>
                                                         <TextBlock Text="{Binding Target}" FontFamily="{StaticResource MonoFont}" FontSize="12" TextWrapping="Wrap" Margin="0,3,0,0" />
                                                         <TextBlock FontFamily="{StaticResource MonoFont}" FontSize="12" TextWrapping="Wrap" Margin="0,2,0,0">
                                                             <Run x:Name="from" Text="{Binding From, Mode=OneWay}" Foreground="{DynamicResource Text2}" /><Run x:Name="arrow" Text=" → " Foreground="{DynamicResource Text3}" /><Run Text="{Binding To, Mode=OneWay}" Foreground="{DynamicResource Accent}" FontWeight="SemiBold" />
@@ -484,8 +490,8 @@
                     <TextBlock Text="{Binding StatusLine}" FontSize="12" Foreground="{DynamicResource Text3}" Margin="0,2,0,0" />
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <CheckBox Style="{StaticResource Check}" Content="Create restore point first" IsChecked="{Binding CreateRestorePoint, Mode=TwoWay}" Margin="0,0,22,0"
-                              ToolTip="Creates a Windows System Restore point before anything changes." />
+                    <CheckBox Style="{StaticResource Check}" Content="{Binding RestoreCheckLabel}" IsChecked="{Binding CreateRestorePoint, Mode=TwoWay}" Margin="0,0,22,0"
+                              ToolTip="{Binding RestoreCheckHint}" />
                     <Button Style="{StaticResource Btn}" Content="Clear selection" Command="{Binding ClearSelectionCommand}" Margin="0,0,10,0" />
                     <Button Style="{StaticResource BtnPrimary}" Content="Review changes" Command="{Binding OpenReviewCommand}" MinWidth="130" />
                 </StackPanel>
@@ -565,8 +571,9 @@
                     </ScrollViewer>
                     <Border Grid.Row="2" Background="{DynamicResource DlgFoot}" CornerRadius="0,0,8,8" BorderBrush="{DynamicResource Stroke}" BorderThickness="0,1,0,0" Padding="24,16,24,20">
                         <StackPanel>
-                            <CheckBox Style="{StaticResource Check}" Content="Create a system restore point before applying" IsChecked="{Binding CreateRestorePoint, Mode=TwoWay}" />
-                            <TextBlock Style="{StaticResource Caption}" Margin="30,4,0,0" Text="Takes about a minute. If something goes wrong, you can roll back with Windows System Restore." />
+                            <TextBlock Style="{StaticResource Body2}" Margin="0,0,0,10" Text="{Binding ReviewBackupText}" TextWrapping="Wrap" />
+                            <CheckBox Style="{StaticResource Check}" Content="{Binding RestoreCheckLabel}" IsChecked="{Binding CreateRestorePoint, Mode=TwoWay}" />
+                            <TextBlock Style="{StaticResource Caption}" Margin="30,4,0,0" Text="{Binding RestoreCheckHint}" TextWrapping="Wrap" />
                             <Grid Margin="0,16,0,0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
@@ -598,17 +605,45 @@
                         </Border>
                         <TextBlock Text="{Binding ProgressText}" Style="{StaticResource Caption}" Margin="0,8,0,0" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
                     </StackPanel>
-                    <ScrollViewer MaxHeight="260" Margin="0,12,0,0" VerticalScrollBarVisibility="Auto" Visibility="{Binding ResultLines.Count, Converter={StaticResource NotEmptyToVis}}">
-                        <ItemsControl ItemsSource="{Binding ResultLines}">
+                    <ScrollViewer MaxHeight="260" Margin="0,12,0,0" VerticalScrollBarVisibility="Auto"
+                                  Visibility="{Binding HasResultFailures, Converter={StaticResource BoolToVis}}">
+                        <StackPanel>
+                            <TextBlock Text="Could not be applied" Style="{StaticResource SectionLabel}" Margin="0,0,0,6" />
+                            <ItemsControl ItemsSource="{Binding ResultLines}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding}" FontSize="12.5" Foreground="{DynamicResource Text2}" TextWrapping="Wrap" Margin="0,0,0,6" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                    <StackPanel Margin="0,8,0,0" Visibility="{Binding HasResultAlreadyDone, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="Already done" Style="{StaticResource SectionLabel}" Margin="0,0,0,6" />
+                        <ItemsControl ItemsSource="{Binding ResultAlreadyDone}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding}" FontSize="12.5" Foreground="{DynamicResource Text2}" TextWrapping="Wrap" Margin="0,0,0,6" />
+                                    <TextBlock Text="{Binding}" FontSize="12.5" Foreground="{DynamicResource Text3}" TextWrapping="Wrap" Margin="0,0,0,6" />
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                    </ScrollViewer>
+                    </StackPanel>
+                    <Expander Header="Technical details" Margin="0,4,0,0" Visibility="{Binding HasResultDetails, Converter={StaticResource BoolToVis}}">
+                        <ItemsControl ItemsSource="{Binding ResultDetails}" Margin="0,8,0,0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" FontSize="11.5" FontFamily="{StaticResource MonoFont}" Foreground="{DynamicResource Text3}" TextWrapping="Wrap" Margin="0,0,0,6" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Expander>
                     <Button Style="{StaticResource BtnPrimary}" Content="Close" HorizontalAlignment="Right" MinWidth="110" Margin="0,16,0,0"
-                            Command="{Binding CloseResultCommand}" Visibility="{Binding IsResultDone, Converter={StaticResource BoolToVis}}" />
+                            Command="{Binding CloseResultCommand}" Visibility="{Binding ShowResultClose, Converter={StaticResource BoolToVis}}" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0"
+                                Visibility="{Binding ShowRestartButtons, Converter={StaticResource BoolToVis}}">
+                        <Button Style="{StaticResource Btn}" Content="Restart later" MinWidth="110" Margin="0,0,10,0" Command="{Binding CloseResultCommand}" />
+                        <Button Style="{StaticResource BtnPrimary}" Content="Restart now" MinWidth="110" Command="{Binding RestartNowCommand}" />
+                    </StackPanel>
                 </StackPanel>
             </Border>
         </Grid>

@@ -11,6 +11,7 @@ sealed class FakeSystem : ISystemAccess
     public readonly Dictionary<string, ServiceSnapshot> Services = new(StringComparer.OrdinalIgnoreCase);
     public readonly Dictionary<string, bool> Tasks = new(StringComparer.OrdinalIgnoreCase);
     public readonly HashSet<string> Packages = new(StringComparer.OrdinalIgnoreCase);
+    public readonly HashSet<string> Provisioned = new(StringComparer.OrdinalIgnoreCase);
     public bool OneDrive = true;
     public bool Nvidia;
     public readonly Dictionary<uint, uint> Nv = new();
@@ -47,10 +48,17 @@ sealed class FakeSystem : ISystemAccess
 
     public AppxSnapshot GetAppx(string pattern)
     {
-        var m = Packages.Where(p => Wildcard.IsMatch(p, pattern)).ToList();
-        return m.Count == 0 ? AppxSnapshot.None : new AppxSnapshot(true, true, m, m.Select(x => x + "_8wekyb3d8bbwe").ToList());
+        var inst = Packages.Where(p => Wildcard.IsMatch(p, pattern)).ToList();
+        var prov = Provisioned.Where(p => Wildcard.IsMatch(p, pattern)).ToList();
+        if (inst.Count == 0 && prov.Count == 0) return AppxSnapshot.None;
+        var names = inst.Concat(prov).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        return new AppxSnapshot(inst.Count > 0, prov.Count > 0, names, names.Select(x => x + "_8wekyb3d8bbwe").ToList());
     }
-    public void RemoveAppx(string pattern) => Packages.RemoveWhere(p => Wildcard.IsMatch(p, pattern));
+    public void RemoveAppx(string pattern)
+    {
+        Packages.RemoveWhere(p => Wildcard.IsMatch(p, pattern));
+        Provisioned.RemoveWhere(p => Wildcard.IsMatch(p, pattern));
+    }
 
     public bool IsOneDriveInstalled() => OneDrive;
     public void UninstallOneDrive() => OneDrive = false;

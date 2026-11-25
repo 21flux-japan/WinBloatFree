@@ -333,6 +333,190 @@ static class Tests
         }
     }
 
+    public static void HagsIsSeparateAndNotInPresets()
+    {
+        var hags = Catalog.Find("performance.hags")!;
+        Assert.Equal(Risk.Moderate, hags.Risk);
+        Assert.True(hags.Restart, "needs a restart");
+        Assert.Equal(0, hags.Presets.Count);
+        Assert.Equal(ActionType.Registry, hags.Actions.Single().Type);
+        Assert.Equal("HwSchMode", hags.Actions.Single().Name);
+        Assert.Equal(MatchMode.EqualsOrAbsent, hags.Actions.Single().Match);
+        Assert.Equal("1", hags.Actions.Single().Value);
+        foreach (var p in new[] { Preset.Recommended, Preset.Privacy, Preset.Everything })
+            Assert.True(!Presets.Select(Catalog, p).Contains(hags.Id), p + " must not include HAGS");
+    }
+
+    public static void HagsAbsentIsAlreadyOffAndUndoDeletes()
+    {
+        const string key = @"SYSTEM\CurrentControlSet\Control\GraphicsDrivers";
+        var sys = new FakeSystem();
+        var eng = new Engine(sys);
+        var t = Catalog.Find("performance.hags")!;
+        Assert.Equal(TweakStatus.Off, eng.Detect(t).Status);
+        Assert.Equal(0, eng.Apply(new[] { t }, null, "test").ChangedCount);
+        Assert.True(!sys.ReadRegistry(RegHive.HKLM, key, "HwSchMode").Exists, "absent value is left absent");
+
+        sys.WriteRegistry(RegHive.HKLM, key, "HwSchMode", RegKind.DWord, "1");
+        Assert.Equal(TweakStatus.Off, eng.Detect(t).Status);
+
+        var sys2 = new FakeSystem();
+        sys2.WriteRegistry(RegHive.HKLM, key, "HwSchMode", RegKind.DWord, "2");
+        var eng2 = new Engine(sys2);
+        Assert.Equal(TweakStatus.On, eng2.Detect(t).Status);
+        var run = eng2.Apply(new[] { t }, null, "test");
+        Assert.Equal(1, run.ChangedCount);
+        Assert.Equal("1", sys2.ReadRegistry(RegHive.HKLM, key, "HwSchMode").Data);
+        Assert.Equal(TweakStatus.Off, eng2.Detect(t).Status);
+        eng2.Undo(run);
+        Assert.Equal("2", sys2.ReadRegistry(RegHive.HKLM, key, "HwSchMode").Data);
+
+        var sys3 = new FakeSystem();
+        sys3.WriteRegistry(RegHive.HKLM, key, "HwSchMode", RegKind.DWord, "0");
+        var eng3 = new Engine(sys3);
+        Assert.Equal(TweakStatus.On, eng3.Detect(t).Status);
+        var run3 = eng3.Apply(new[] { t }, null, "test");
+        eng3.Undo(run3);
+        Assert.Equal("0", sys3.ReadRegistry(RegHive.HKLM, key, "HwSchMode").Data);
+
+        // Undo removes HwSchMode when the saved previous state was "not set".
+        var sys5 = new FakeSystem();
+        var eng5 = new Engine(sys5);
+        sys5.WriteRegistry(RegHive.HKLM, key, "HwSchMode", RegKind.DWord, "2");
+        var run5 = eng5.Apply(new[] { t }, null, "test");
+        Assert.Equal("1", sys5.ReadRegistry(RegHive.HKLM, key, "HwSchMode").Data);
+        // Manually set previous to missing and undo.
+        run5.Entries[0].PreviousRegistry = new RegSnapshot(false, null, null, false);
+        eng5.Undo(run5);
+        Assert.True(!sys5.ReadRegistry(RegHive.HKLM, key, "HwSchMode").Exists, "undo deletes a value that was not there before");
+    }
+
+    public static void PartialStatusListsWhichPartsAreOn()
+    {
+        var sys = new FakeSystem();
+        sys.Services["DiagTrack"] = new ServiceSnapshot(true, ServiceStart.Disabled, false);
+        sys.WriteRegistry(RegHive.HKLM, @"SYSTEM\CurrentControlSet\Control\WMI\Autologger\Diagtrack-Listener", "Start", RegKind.DWord, "1");
+        var det = new Engine(sys).Detect(Catalog.Find("telemetry.diagtrack")!);
+        Assert.Equal(TweakStatus.Partial, det.Status);
+        Assert.Equal("Done", Engine.ActionStatusText(det.Actions[0]));
+        Assert.Equal("Still on", Engine.ActionStatusText(det.Actions[1]));
+        Assert.True(det.Actions[0].Applied);
+        Assert.True(!det.Actions[1].Applied);
+    }
+
+    public static void BackupCopyAndRunSummaryWording()
+    {
+        Assert.Equal("Create restore point first", BackupCopy.CheckLabel(true));
+        Assert.Equal("Turn on System Restore and create a restore point first", BackupCopy.CheckLabel(false));
+        Assert.True(BackupCopy.CheckHint(false).Contains("still saved either way"));
+        Assert.True(BackupCopy.ReviewText(false, false).Contains("No System Restore point"));
+        Assert.True(BackupCopy.ReviewText(true, false).Contains("turned on for the system drive"));
+        Assert.True(BackupCopy.CreateFailedText("System Restore is turned off on this PC.").Contains("will still be saved"));
+        Assert.True(!BackupCopy.CreateFailedText("x").Contains('\u2014'));
+
+        var t = Catalog.Find("performance.hags")!;
+        var sys = new FakeSystem();
+        sys.WriteRegistry(RegHive.HKLM, @"SYSTEM\CurrentControlSet\Control\GraphicsDrivers", "HwSchMode", RegKind.DWord, "2");
+        var run = new Engine(sys).Apply(new[] { t }, null, "test");
+        Assert.True(RunSummary.NeedsRestart(run, id => Catalog.Find(id)?.Restart == true));
+        var text = RunSummary.AfterApply(run, true);
+        Assert.True(text.Contains("Restart the PC to finish some changes."));
+        var noRestart = RunSummary.AfterApply(run, false);
+        Assert.True(noRestart.Contains("sign out"));
+        Assert.True(!noRestart.Contains("Restart the PC to finish some changes."));
+        Assert.Equal(null, RunSummary.AppRemovalPendingRestart(run));
+    }
+
+    public static void AppRemovalPendingRestartMessageAndDetection()
+    {
+        var sys = new FakeSystem();
+        sys.Packages.Add("Microsoft.BingNews");
+        var eng = new Engine(sys);
+        var t = Catalog.Find("apps.bing-news")!;
+        var det = eng.Detect(t);
+        Assert.Equal(TweakStatus.On, det.Status);
+        Assert.Equal("Installed", det.Actions[0].Current);
+        var run = eng.Apply(new[] { t }, null, "test");
+        Assert.Equal(1, run.ChangedCount);
+        Assert.Equal(0, run.FailedCount);
+        var msg = RunSummary.AppRemovalPendingRestart(run);
+        Assert.True(msg is not null && msg.Contains("progress screen"));
+
+        var sys2 = new FakeSystem();
+        sys2.Provisioned.Add("Microsoft.BingNews");
+        var det2 = new Engine(sys2).Detect(t);
+        Assert.Equal("Provisioned for new users", det2.Actions[0].Current);
+        Assert.Equal(TweakStatus.On, det2.Status);
+
+        var sys3 = new FakeSystem();
+        sys3.Packages.Add("Microsoft.BingNews");
+        sys3.Provisioned.Add("Microsoft.BingNews");
+        Assert.Equal("Installed and provisioned for new users", new Engine(sys3).Detect(t).Actions[0].Current);
+    }
+
+    public static void AppxNotFoundIsAlreadyDone()
+    {
+        Assert.True(AppxErrors.IsAlreadyDone(AppxErrors.NotFound, "Element not found."));
+        Assert.True(AppxErrors.IsAlreadyDone(0, "Deployment DeprovisionPackageOperation operation with target volume C: on Package Microsoft.MicrosoftOfficeHub_2026.203.2231.0_neutral_~_8wekyb3d8bbwe from: failed with error 0x80070490"));
+        Assert.True(!AppxErrors.IsAlreadyDone(unchecked((int)0x80070005), "Access denied"));
+        Assert.Equal("Already done.", RunSummary.PlainError("Element not found."));
+        Assert.Equal("The app could not be fully removed.", RunSummary.PlainError("Deployment RemovePackageOperation failed with error 0x80070005"));
+        Assert.Equal("Microsoft.BingNews could not be removed for new users.", AppxErrors.ShortRemoveFailure("Microsoft.BingNews", true));
+    }
+
+    public static void SystemRestoreHistoryIsManualOnUndo()
+    {
+        var sys = new FakeSystem();
+        var eng = new Engine(sys);
+        var run = new RunRecord { Id = "test", StartedAt = DateTimeOffset.Now };
+        run.Entries.Add(Engine.SystemRestoreEnabledEntry(@"C:\"));
+        Assert.True(run.CanUndo);
+        var rep = eng.Undo(run);
+        Assert.Equal(0, rep.Restored);
+        Assert.Equal(1, rep.Manual);
+        Assert.True(run.Entries[0].Undone);
+        Assert.True(rep.Messages[0].Contains("left on"));
+        Assert.True(!run.CanUndo);
+    }
+
+    public static void StartupSelectionUsesDetectedLevelAndMatchesPreset()
+    {
+        var status = new Dictionary<string, TweakStatus>(StringComparer.Ordinal);
+        foreach (var t in Catalog.Tweaks) status[t.Id] = TweakStatus.On;
+        status["updates.level.pause"] = TweakStatus.Off;
+        status["updates.level.leave"] = TweakStatus.On;
+
+        var rec = Presets.Select(Catalog, Preset.Recommended);
+        Assert.True(rec.Contains("updates.level.leave"));
+        Assert.True(!rec.Contains("updates.level.pause"));
+
+        var sel = Presets.SelectDefault(Catalog, Preset.Recommended, t => status.TryGetValue(t.Id, out var s) ? s : TweakStatus.On);
+        Assert.True(sel.Contains("updates.level.pause"), "already-applied pause is selected");
+        Assert.True(!sel.Contains("updates.level.leave"), "leave as is is not also selected");
+        Assert.Equal(Preset.Custom, Presets.Match(Catalog, sel));
+
+        var again = Presets.Select(Catalog, Preset.Recommended);
+        Assert.True(again.SetEquals(rec), "clicking Recommended always yields the same selection");
+        Assert.Equal(Preset.Recommended, Presets.Match(Catalog, again));
+    }
+
+    public static void AlreadyAppliedPauseIsNotPendingUnlessWeeksChange()
+    {
+        var sel = new HashSet<string> { "updates.level.pause" };
+        var none = Review.Pending(Catalog, sel, _ => TweakStatus.Off);
+        Assert.Equal(0, none.Count);
+
+        var refresh = Review.Pending(Catalog, sel, _ => TweakStatus.Off, _ => true);
+        Assert.Equal(1, refresh.Count);
+
+        var now = new DateTime(2026, 11, 25, 9, 0, 0, DateTimeKind.Utc);
+        Assert.Equal(5, PauseLength.WeeksRemaining("PauseUpdatesExpiryTime = \"2026-12-30T09:00:00Z\"", now));
+        Assert.True(PauseLength.MatchesSelectedWeeks("PauseUpdatesExpiryTime = \"2026-12-30T09:00:00Z\"", "5", now));
+        Assert.True(!PauseLength.MatchesSelectedWeeks("PauseUpdatesExpiryTime = \"2026-12-30T09:00:00Z\"", "2", now));
+        Assert.Equal("Windows protects this setting and would not allow the change.",
+            RunSummary.PlainError("Attempted to perform an unauthorized operation."));
+    }
+
     static string FindRoot()
     {
         var d = new DirectoryInfo(AppContext.BaseDirectory);

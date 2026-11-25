@@ -30,6 +30,28 @@
       ]
     },
     {
+      "id": "performance.hags",
+      "name": "Turn off hardware-accelerated GPU scheduling",
+      "summary": "Stops Windows from letting the GPU schedule its own work. On some PCs this causes stutter, frame drops or very low fps. Needs a restart.",
+      "description": "Hardware-accelerated GPU scheduling (HAGS) lets the graphics card schedule its own work instead of Windows doing it. On some PCs and drivers this causes stutter, frame drops or very low fps. Turning it off is the same as the Hardware-accelerated GPU scheduling switch in Settings > System > Display > Graphics > Advanced graphics settings. This is separate from G-SYNC and from the Windows variable refresh rate switch. A restart is required for the change to take effect. Windows only shows the switch when your GPU and driver support it.",
+      "risk": "Moderate",
+      "presets": [],
+      "restart": true,
+      "goodToKnow": "If the switch is missing in Settings, your GPU or driver may not support this. When the setting has never been changed, Windows leaves it off and this item shows as already off.",
+      "undo": "The old HwSchMode value is saved first. Undo puts it back, or removes it if it was not there.",
+      "actions": [
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SYSTEM\\CurrentControlSet\\Control\\GraphicsDrivers",
+          "name": "HwSchMode",
+          "kind": "DWord",
+          "value": 1,
+          "match": "EqualsOrAbsent"
+        }
+      ]
+    },
+    {
       "id": "performance.nvidia-gsync",
       "name": "Turn off NVIDIA G-SYNC (driver setting)",
       "summary": "Turns off G-SYNC in the NVIDIA driver for all apps. NVIDIA graphics cards only.",

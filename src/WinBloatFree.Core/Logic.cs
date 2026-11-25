@@ -21,6 +21,22 @@ public static class Presets
         return ids;
     }
 
+    /// <summary>
+    /// A default preset, with exclusive-group options replaced by the level already in place on this PC, if any.
+    /// </summary>
+    public static HashSet<string> SelectDefault(TweakCatalog catalog, Preset baseline, Func<Tweak, TweakStatus> status)
+    {
+        var ids = Select(catalog, baseline);
+        foreach (var g in catalog.Tweaks.Where(t => t.Group is not null).GroupBy(t => t.Group!))
+        {
+            var applied = g.FirstOrDefault(t => t.Actions.Count > 0 && status(t) == TweakStatus.Off);
+            if (applied is null) continue;
+            foreach (var t in g) ids.Remove(t.Id);
+            ids.Add(applied.Id);
+        }
+        return ids;
+    }
+
     /// <summary>Pure: the preset that matches a selection exactly, or Custom.</summary>
     public static Preset Match(TweakCatalog catalog, IReadOnlySet<string> selected)
     {
@@ -40,11 +56,12 @@ public static class Review
     /// Pure: what will actually change. Skips "leave as is" options and tweaks whose
     /// status says there is nothing to do.
     /// </summary>
-    public static IReadOnlyList<Tweak> Pending(TweakCatalog catalog, IReadOnlySet<string> selected, Func<Tweak, TweakStatus> status) =>
-        catalog.Tweaks.Where(t => selected.Contains(t.Id) && t.Actions.Count > 0 &&
-                                  (status(t) is TweakStatus.On or TweakStatus.Partial or TweakStatus.Unknown ||
-                                   (t.Parameter is not null && status(t) == TweakStatus.Off)))
-                      .ToList();
+    public static IReadOnlyList<Tweak> Pending(TweakCatalog catalog, IReadOnlySet<string> selected, Func<Tweak, TweakStatus> status, Func<Tweak, bool>? parameterNeedsApply = null) =>
+        catalog.Tweaks.Where(t => selected.Contains(t.Id) && t.Actions.Count > 0 && NeedsApply(t, status(t), parameterNeedsApply)).ToList();
+
+    static bool NeedsApply(Tweak t, TweakStatus status, Func<Tweak, bool>? parameterNeedsApply) =>
+        status is TweakStatus.On or TweakStatus.Partial or TweakStatus.Unknown
+        || (t.Parameter is not null && status == TweakStatus.Off && parameterNeedsApply?.Invoke(t) == true);
 
     public static ReviewSummary Summarize(TweakCatalog catalog, IReadOnlyList<Tweak> pending)
     {

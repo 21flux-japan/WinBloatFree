@@ -9,15 +9,15 @@ A small, portable Windows 10 and 11 tool that turns off telemetry, ads, suggesti
 - Every change is saved before it is made and can be undone from Undo / History.
 - Open source under the MIT license.
 
-> **Use at your own risk.** WinBloatFree changes system settings, services and installed apps. It is tested with care, but every PC is different. Keep "Create restore point first" ticked, read the explanation of each change, and use Undo / History if something does not work the way you want. The software comes with no warranty (see [LICENSE](LICENSE)).
+> **Use at your own risk.** WinBloatFree changes system settings, services and installed apps. It is tested with care, but every PC is different. Prefer a System Restore point when the box is available, read the explanation of each change, and use Undo / History if something does not work the way you want. The software comes with no warranty (see [LICENSE](LICENSE)).
 
 ## How it works
 
 1. Start `WinBloatFree.exe`. Windows asks for administrator rights, because most changes affect the whole PC.
-2. The app checks this PC and shows the current status of every tweak: **Currently on**, **Already off**, **Not installed** or **Not applicable**.
+2. The app checks this PC and shows the current status of every tweak: **Currently on**, **Already off**, **Partly on**, **Not installed** or **Not applicable**. When a tweak is partly on, the detail pane lists which parts are already done and which are still on.
 3. Pick a preset or tick boxes yourself. The right pane shows what each tweak does, exactly which registry values, services, tasks or apps change, and how undo works.
 4. Select **Review changes**. Nothing has changed yet. The review lists every change by category and risk.
-5. Select **Apply**. If "Create a system restore point" is ticked, a restore point is made first. If that fails, nothing is changed.
+5. Select **Apply**. A registry backup and an undo history file are always saved. If the restore point box is ticked, a System Restore point is made first. If System Restore is off, the box offers to turn it on for the system drive, and is unticked by default. If the restore point cannot be created, you can continue without it or cancel. Nothing is aborted automatically.
 
 Each tweak has a risk label:
 
@@ -60,13 +60,13 @@ Options: no automatic restart while signed in, no sharing of update downloads wi
 
 **Services** (16). Optional services such as Fax, Downloaded Maps Manager, Retail Demo, Remote Registry, Geolocation, SysMain and Xbox services, each with a clear risk label. Printing, Windows Search and biometrics are listed as Advanced and are not in any preset.
 
-**Performance** (3). Turn off Windows variable refresh rate (fixes stutter and very low frame rates on the desktop and in windowed apps on some VRR monitors, any graphics card), turn off NVIDIA G-SYNC in the driver (NVIDIA only, separate checkbox) and turn off background game recording.
+**Performance** (4). Turn off Windows variable refresh rate (fixes stutter and very low frame rates on the desktop and in windowed apps on some VRR monitors, any graphics card), turn off hardware-accelerated GPU scheduling (needs a restart), turn off NVIDIA G-SYNC in the driver (NVIDIA only, separate checkbox) and turn off background game recording.
 
 **Undo / History**. Lists every run with what changed. Undo puts everything back.
 
 ## Safety and undo
 
-- Before each change, the previous state is written to `C:\ProgramData\WinBloatFree\history\run-<date>.json`: the old registry value (or the fact that it did not exist), the old service startup type and whether it was running, the old task state, and the old NVIDIA driver value. The file is saved after every tweak, so it is complete even if the app is closed halfway.
+- Before each change, the previous state is written to `C:\ProgramData\WinBloatFree\history\run-<date>.json`: the old registry value (or the fact that it did not exist), the old service startup type and whether it was running, the old task state, and the old NVIDIA driver value. The file is saved after every tweak, so it is complete even if the app is closed halfway. If WinBloatFree turns on System Restore so it can create a restore point, that is recorded in the same history. Undo leaves System Restore on so existing restore points stay available.
 - Undo restores those values, newest change first, and removes registry keys that WinBloatFree created.
 - Removed apps cannot be put back offline. Undo tells you which ones to reinstall from the Microsoft Store.
 - Uninstalled OneDrive is put back with the OneDrive installer that ships with Windows, if it is still there.
