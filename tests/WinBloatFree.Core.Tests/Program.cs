@@ -606,7 +606,40 @@ static class Tests
     {
         var readme = File.ReadAllText(Path.Combine(FindRoot(), "README.md"));
         Assert.True(readme.Contains(About.Title), "README has the heading");
-        Assert.True(readme.Contains(About.Body), "README has the same paragraph");
+        Assert.True(readme.Contains(About.Body), "README has the same wording");
+    }
+
+    public static void DetectAllMatchesSequentialAndLoadsAppxOnce()
+    {
+        var sys = new FakeSystem { Nvidia = true };
+        sys.Nv[0x1194F158] = 2;
+        sys.Packages.Add("Microsoft.BingNews");
+        sys.Packages.Add("Microsoft.GetHelp");
+        sys.Provisioned.Add("Microsoft.BingNews");
+        var eng = new Engine(sys);
+
+        var sequential = Catalog.Tweaks.Select(t => (t.Id, eng.Detect(t))).ToList();
+        int loadsBefore = sys.AppxInventoryLoads;
+        var parallel = eng.DetectAll(Catalog.Tweaks, parallel: true);
+        var again = eng.DetectAll(Catalog.Tweaks, parallel: false);
+        Assert.Equal(loadsBefore + 2, sys.AppxInventoryLoads, "one inventory load per DetectAll scan");
+        Assert.Equal(Catalog.Tweaks.Count, parallel.Count, "every tweak");
+        Assert.Equal(Catalog.Tweaks.Count, again.Count, "sequential DetectAll count");
+        for (int i = 0; i < sequential.Count; i++)
+        {
+            Assert.Equal(sequential[i].Id, parallel[i].Tweak.Id, "parallel order");
+            Assert.Equal(sequential[i].Item2.Status, parallel[i].Detection.Status, sequential[i].Id + " parallel");
+            Assert.Equal(sequential[i].Item2.Status, again[i].Detection.Status, sequential[i].Id + " sequential DetectAll");
+            Assert.Equal(sequential[i].Item2.Actions.Count, parallel[i].Detection.Actions.Count, sequential[i].Id + " actions");
+            for (int a = 0; a < sequential[i].Item2.Actions.Count; a++)
+            {
+                var want = sequential[i].Item2.Actions[a];
+                var got = parallel[i].Detection.Actions[a];
+                Assert.Equal(want.Applied, got.Applied, sequential[i].Id + " applied " + a);
+                Assert.Equal(want.Present, got.Present, sequential[i].Id + " present " + a);
+                Assert.Equal(want.Current, got.Current, sequential[i].Id + " current " + a);
+            }
+        }
     }
 
     static string FindRoot()

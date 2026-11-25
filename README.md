@@ -11,7 +11,11 @@ A small, portable Windows 10 and 11 tool that turns off telemetry, ads, suggesti
 
 ## Made by 21 FLUX
 
-Windows used to be a good, simple system. Today it comes with apps you didn't ask for, ads, and constant data collection. With so much personal data being leaked and stolen, it's time to take back control. WinBloatFree lets you choose what Windows keeps, and it never collects anything itself.
+Windows used to be a simple, dependable system. Today it ships with apps nobody asked for, built-in ads, and constant data collection. Personal data is leaked and sold all the time, and people should decide for themselves what their own computer shares.
+
+WinBloatFree puts that choice back in your hands. Every change is optional, shown clearly, and can be undone. The program collects nothing itself: no tracking, no accounts, and nothing sent anywhere.
+
+Made by 21 FLUX in Okinawa. Small, simple software that does one job well.
 
 > **Use at your own risk.** WinBloatFree changes system settings, services and installed apps. It is tested with care, but every PC is different. Prefer a System Restore point when the box is available, read the explanation of each change, and use Undo / History if something does not work the way you want. The software comes with no warranty (see [LICENSE](LICENSE)).
 

@@ -28,6 +28,8 @@
     <!-- WPF does not support trimming, so size is kept down in safe ways only. -->
     <PublishTrimmed>false</PublishTrimmed>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <!-- ReadyToRun was tried and left off: with compression it grew the exe from about 69 MiB to about 85 MiB. -->
+    <PublishReadyToRun>false</PublishReadyToRun>
     <DebugType>none</DebugType>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <!-- Turn off runtime features that are not needed. Nothing here phones home either way. -->

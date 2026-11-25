@@ -47,6 +47,11 @@ public interface ISystemAccess
     TaskSnapshot GetTask(string path);
     void SetTaskEnabled(string path, bool enabled);
 
+    /// <summary>
+    /// Reloads the installed and provisioned app list once so later GetAppx calls in this scan
+    /// can reuse it. Call at the start of a status scan.
+    /// </summary>
+    void RefreshAppxInventory();
     AppxSnapshot GetAppx(string pattern);
     void RemoveAppx(string pattern);
 

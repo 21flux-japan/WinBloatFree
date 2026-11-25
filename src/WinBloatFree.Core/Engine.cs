@@ -108,6 +108,29 @@ public sealed class Engine
         return new Detection(Summarize(states), states);
     }
 
+    /// <summary>
+    /// Reads the status of many tweaks. The app list is loaded once, then each tweak is
+    /// checked, optionally in parallel. Results match calling Detect on each tweak in order.
+    /// </summary>
+    public IReadOnlyList<(Tweak Tweak, Detection Detection)> DetectAll(IEnumerable<Tweak> tweaks, IReadOnlyDictionary<string, string>? parameters = null, bool parallel = true)
+    {
+        _sys.RefreshAppxInventory();
+        var list = tweaks as IList<Tweak> ?? tweaks.ToList();
+        var results = new (Tweak, Detection)[list.Count];
+        void One(int i)
+        {
+            var t = list[i];
+            string? value = null;
+            if (parameters is not null) parameters.TryGetValue(t.Id, out value);
+            results[i] = (t, Detect(t, value));
+        }
+        if (parallel && list.Count > 1)
+            Parallel.For(0, list.Count, new ParallelOptions { MaxDegreeOfParallelism = Math.Max(2, Environment.ProcessorCount) }, One);
+        else
+            for (int i = 0; i < list.Count; i++) One(i);
+        return results;
+    }
+
     /// <summary>Pure: turns per-action states into one status.</summary>
     public static TweakStatus Summarize(IReadOnlyList<ActionState> states)
     {

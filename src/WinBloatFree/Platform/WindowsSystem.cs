@@ -17,6 +17,7 @@ namespace WinBloatFree.Platform;
 public sealed class WindowsSystem : ISystemAccess
 {
     readonly object _appxLock = new();
+    readonly object _taskLock = new();
     List<(string Name, string FullName, string Family)>? _installed;
     List<(string Name, string FullName, string Family)>? _provisioned;
     PackageManager? _pmInstance;
@@ -109,23 +110,28 @@ public sealed class WindowsSystem : ISystemAccess
 
     public TaskSnapshot GetTask(string path)
     {
-        var (folder, name) = SplitTask(path);
-        try
+        lock (_taskLock)
         {
-            dynamic s = Scheduler();
-            dynamic f = s.GetFolder(folder);
-            dynamic task = f.GetTask(name);
-            bool enabled = task.Enabled;
-            return new TaskSnapshot(true, enabled);
-        }
-        catch (Exception ex) when (IsNotFound(ex))
-        {
-            return new TaskSnapshot(false, false);
+            var (folder, name) = SplitTask(path);
+            try
+            {
+                dynamic s = Scheduler();
+                dynamic f = s.GetFolder(folder);
+                dynamic task = f.GetTask(name);
+                bool enabled = task.Enabled;
+                return new TaskSnapshot(true, enabled);
+            }
+            catch (Exception ex) when (IsNotFound(ex))
+            {
+                return new TaskSnapshot(false, false);
+            }
         }
     }
 
     public void SetTaskEnabled(string path, bool enabled)
     {
+        lock (_taskLock)
+        {
         var (folder, name) = SplitTask(path);
         try
         {
@@ -138,39 +144,58 @@ public sealed class WindowsSystem : ISystemAccess
         {
             throw new UnauthorizedAccessException("Windows protects this task and does not allow changing it, even as administrator.");
         }
+        }
     }
 
     // ------------------------------------------------------------------ appx
 
-    void LoadPackages()
+    public void RefreshAppxInventory()
     {
         lock (_appxLock)
         {
-            if (_installed is not null) return;
-            var inst = new List<(string, string, string)>();
-            foreach (var p in _pm.FindPackages())
-            {
-                try { inst.Add((p.Id.Name, p.Id.FullName, p.Id.FamilyName)); } catch (COMException) { }
-            }
-            var prov = new List<(string, string, string)>();
-            try
-            {
-                foreach (var p in _pm.FindProvisionedPackages())
-                {
-                    try { prov.Add((p.Id.Name, p.Id.FullName, p.Id.FamilyName)); } catch (COMException) { }
-                }
-            }
-            catch (Exception ex) when (ex is COMException or UnauthorizedAccessException or NotImplementedException) { }
-            _installed = inst;
-            _provisioned = prov;
+            _installed = null;
+            _provisioned = null;
+            LoadPackagesUnlocked();
         }
+    }
+
+    void LoadPackages()
+    {
+        lock (_appxLock) LoadPackagesUnlocked();
+    }
+
+    void LoadPackagesUnlocked()
+    {
+        if (_installed is not null) return;
+        var inst = new List<(string, string, string)>();
+        foreach (var p in _pm.FindPackages())
+        {
+            try { inst.Add((p.Id.Name, p.Id.FullName, p.Id.FamilyName)); } catch (COMException) { }
+        }
+        var prov = new List<(string, string, string)>();
+        try
+        {
+            foreach (var p in _pm.FindProvisionedPackages())
+            {
+                try { prov.Add((p.Id.Name, p.Id.FullName, p.Id.FamilyName)); } catch (COMException) { }
+            }
+        }
+        catch (Exception ex) when (ex is COMException or UnauthorizedAccessException or NotImplementedException) { }
+        _installed = inst;
+        _provisioned = prov;
     }
 
     public AppxSnapshot GetAppx(string pattern)
     {
-        LoadPackages();
-        var inst = _installed!.Where(p => Wildcard.IsMatch(p.Name, pattern)).ToList();
-        var prov = _provisioned!.Where(p => Wildcard.IsMatch(p.Name, pattern)).ToList();
+        List<(string Name, string FullName, string Family)> installed, provisioned;
+        lock (_appxLock)
+        {
+            LoadPackagesUnlocked();
+            installed = _installed!;
+            provisioned = _provisioned!;
+        }
+        var inst = installed.Where(p => Wildcard.IsMatch(p.Name, pattern)).ToList();
+        var prov = provisioned.Where(p => Wildcard.IsMatch(p.Name, pattern)).ToList();
         if (inst.Count == 0 && prov.Count == 0) return AppxSnapshot.None;
         return new AppxSnapshot(inst.Count > 0, prov.Count > 0,
             inst.Concat(prov).Select(p => p.FullName).Distinct().ToList(),

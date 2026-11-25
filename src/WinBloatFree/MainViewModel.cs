@@ -296,9 +296,12 @@ public sealed class MainViewModel : Observable
     {
         StatusLine = "Checking this PC";
         var list = _byId.Values.ToList();
-        var results = await Task.Run(() => list.Select(t => (t, _engine.Detect(t.Tweak, t.ParameterValue))).ToList());
-        foreach (var (vm, det) in results)
+        var parameters = list.Where(t => t.ParameterValue is not null).ToDictionary(t => t.Id, t => t.ParameterValue!);
+        var results = await Task.Run(() => _engine.DetectAll(list.Select(t => t.Tweak), parameters, parallel: true));
+        var vms = list.ToDictionary(t => t.Id);
+        foreach (var (tweak, det) in results)
         {
+            var vm = vms[tweak.Id];
             vm.Detection = det;
             if (!vm.IsAvailable && vm.IsChecked && !vm.IsLevel) vm.SetChecked(false);
         }

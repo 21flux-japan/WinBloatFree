@@ -46,12 +46,16 @@ jobs:
           if ([string]::IsNullOrWhiteSpace($info.ProductVersion)) { throw "ProductVersion is missing" }
           "product-version=$($info.ProductVersion)" | Out-File -Append -FilePath $env:GITHUB_OUTPUT
 
-      - name: Checksum
+      - name: Checksum and size
         shell: pwsh
         run: |
-          $hash = (Get-FileHash artifacts/publish/WinBloatFree.exe -Algorithm SHA256).Hash.ToLower()
+          $exe = Get-Item artifacts/publish/WinBloatFree.exe
+          $hash = (Get-FileHash $exe.FullName -Algorithm SHA256).Hash.ToLower()
           "$hash  WinBloatFree.exe" | Out-File -Encoding ascii artifacts/publish/WinBloatFree.exe.sha256
+          $mib = [math]::Round($exe.Length / 1MB, 1)
+          $mb = [math]::Round($exe.Length / 1e6, 1)
           Write-Host "SHA256: $hash"
+          Write-Host "SIZE: $($exe.Length) bytes ($mib MiB, $mb MB)"
 
       - name: Upload unsigned build
         id: upload-unsigned-artifact
@@ -108,3 +112,18 @@ jobs:
             artifacts/publish/WinBloatFree.exe
             artifacts/publish/WinBloatFree.exe.sha256
           generate_release_notes: true
+
+  # Real Windows apply/undo of tweaks that are safe on a fresh CI VM.
+  # The job is required so a bad change cannot ship unnoticed. If it
+  # later proves flaky, it can be marked continue-on-error for tags only.
+  integration:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Apply and undo safe tweaks
+        run: dotnet run --project tests/WinBloatFree.Integration.Tests -c Release

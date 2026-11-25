@@ -12,6 +12,9 @@ sealed class FakeSystem : ISystemAccess
     public readonly Dictionary<string, bool> Tasks = new(StringComparer.OrdinalIgnoreCase);
     public readonly HashSet<string> Packages = new(StringComparer.OrdinalIgnoreCase);
     public readonly HashSet<string> Provisioned = new(StringComparer.OrdinalIgnoreCase);
+    public int AppxInventoryLoads { get; private set; }
+    public int GetAppxCalls { get; private set; }
+    readonly object _gate = new();
     public bool OneDrive = true;
     public bool Nvidia;
     public readonly Dictionary<uint, uint> Nv = new();
@@ -20,8 +23,13 @@ sealed class FakeSystem : ISystemAccess
     static string K(RegHive h, string key) => $"{h}\\{key}";
     static string V(RegHive h, string key, string name) => $"{K(h, key)}::{name}";
 
-    public RegSnapshot ReadRegistry(RegHive hive, string key, string name) =>
-        Values.TryGetValue(V(hive, key, name), out var v) ? new RegSnapshot(true, v.Kind, v.Data, true) : RegSnapshot.Missing(Keys.Contains(K(hive, key)));
+    public RegSnapshot ReadRegistry(RegHive hive, string key, string name)
+    {
+        lock (_gate)
+        {
+            return Values.TryGetValue(V(hive, key, name), out var v) ? new RegSnapshot(true, v.Kind, v.Data, true) : RegSnapshot.Missing(Keys.Contains(K(hive, key)));
+        }
+    }
 
     public void WriteRegistry(RegHive hive, string key, string name, RegKind kind, string data)
     {
@@ -38,34 +46,57 @@ sealed class FakeSystem : ISystemAccess
         if (!Values.Keys.Any(v => v.StartsWith(k + "::", StringComparison.OrdinalIgnoreCase))) Keys.Remove(k);
     }
 
-    public ServiceSnapshot GetService(string name) => Services.TryGetValue(name, out var s) ? s : new ServiceSnapshot(false, null, false);
+    public ServiceSnapshot GetService(string name)
+    {
+        lock (_gate) return Services.TryGetValue(name, out var s) ? s : new ServiceSnapshot(false, null, false);
+    }
     public void SetServiceStart(string name, ServiceStart start) => Services[name] = Services[name] with { Start = start };
     public void StopService(string name) => Services[name] = Services[name] with { Running = false };
     public void StartService(string name) => Services[name] = Services[name] with { Running = true };
 
-    public TaskSnapshot GetTask(string path) => Tasks.TryGetValue(path, out var e) ? new TaskSnapshot(true, e) : new TaskSnapshot(false, false);
+    public TaskSnapshot GetTask(string path)
+    {
+        lock (_gate) return Tasks.TryGetValue(path, out var e) ? new TaskSnapshot(true, e) : new TaskSnapshot(false, false);
+    }
     public void SetTaskEnabled(string path, bool enabled) => Tasks[path] = enabled;
+
+    public void RefreshAppxInventory()
+    {
+        lock (_gate) AppxInventoryLoads++;
+    }
 
     public AppxSnapshot GetAppx(string pattern)
     {
-        var inst = Packages.Where(p => Wildcard.IsMatch(p, pattern)).ToList();
-        var prov = Provisioned.Where(p => Wildcard.IsMatch(p, pattern)).ToList();
-        if (inst.Count == 0 && prov.Count == 0) return AppxSnapshot.None;
-        var names = inst.Concat(prov).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-        return new AppxSnapshot(inst.Count > 0, prov.Count > 0, names, names.Select(x => x + "_8wekyb3d8bbwe").ToList());
+        lock (_gate)
+        {
+            GetAppxCalls++;
+            var inst = Packages.Where(p => Wildcard.IsMatch(p, pattern)).ToList();
+            var prov = Provisioned.Where(p => Wildcard.IsMatch(p, pattern)).ToList();
+            if (inst.Count == 0 && prov.Count == 0) return AppxSnapshot.None;
+            var names = inst.Concat(prov).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            return new AppxSnapshot(inst.Count > 0, prov.Count > 0, names, names.Select(x => x + "_8wekyb3d8bbwe").ToList());
+        }
     }
     public void RemoveAppx(string pattern)
     {
-        Packages.RemoveWhere(p => Wildcard.IsMatch(p, pattern));
-        Provisioned.RemoveWhere(p => Wildcard.IsMatch(p, pattern));
+        lock (_gate)
+        {
+            Packages.RemoveWhere(p => Wildcard.IsMatch(p, pattern));
+            Provisioned.RemoveWhere(p => Wildcard.IsMatch(p, pattern));
+        }
     }
 
-    public bool IsOneDriveInstalled() => OneDrive;
+    public bool IsOneDriveInstalled() { lock (_gate) return OneDrive; }
     public void UninstallOneDrive() => OneDrive = false;
     public bool ReinstallOneDrive() { OneDrive = true; return true; }
 
-    public NvSnapshot GetNvidiaSetting(uint settingId) =>
-        !Nvidia ? new NvSnapshot(false, false, null) : Nv.TryGetValue(settingId, out var v) ? new NvSnapshot(true, true, v) : new NvSnapshot(true, false, null);
-    public void SetNvidiaSetting(uint settingId, uint value) => Nv[settingId] = value;
-    public void ResetNvidiaSetting(uint settingId) => Nv.Remove(settingId);
+    public NvSnapshot GetNvidiaSetting(uint settingId)
+    {
+        lock (_gate)
+        {
+            return !Nvidia ? new NvSnapshot(false, false, null) : Nv.TryGetValue(settingId, out var v) ? new NvSnapshot(true, true, v) : new NvSnapshot(true, false, null);
+        }
+    }
+    public void SetNvidiaSetting(uint settingId, uint value) { lock (_gate) Nv[settingId] = value; }
+    public void ResetNvidiaSetting(uint settingId) { lock (_gate) Nv.Remove(settingId); }
 }
