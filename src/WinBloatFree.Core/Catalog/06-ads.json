@@ -1,0 +1,353 @@
+{
+  "id": "ads",
+  "name": "Ads & Suggestions",
+  "description": "Removes ads, promotions and suggestions from Start, the lock screen, Settings, File Explorer and search.",
+  "icon": "E8BD",
+  "kind": "list",
+  "order": 6,
+  "tweaks": [
+    {
+      "id": "ads.start",
+      "name": "Turn off Start menu suggestions",
+      "summary": "No more suggested apps and tips in Start.",
+      "description": "Turns off app suggestions in Start, recommendations for tips, shortcuts and new apps, and account notifications in Start.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "actions": [
+        {
+          "type": "Registry",
+          "hive": "HKCU",
+          "key": "Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+          "name": "SystemPaneSuggestionsEnabled",
+          "kind": "DWord",
+          "value": 0
+        },
+        {
+          "type": "Registry",
+          "hive": "HKCU",
+          "key": "Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+          "name": "SubscribedContent-338388Enabled",
+          "kind": "DWord",
+          "value": 0
+        },
+        {
+          "type": "Registry",
+          "hive": "HKCU",
+          "key": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+          "name": "Start_IrisRecommendations",
+          "kind": "DWord",
+          "value": 0
+        },
+        {
+          "type": "Registry",
+          "hive": "HKCU",
+          "key": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+          "name": "Start_AccountNotifications",
+          "kind": "DWord",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "ads.lock-screen",
+      "name": "Turn off lock screen tips and fun facts",
+      "summary": "Removes tips, tricks and ads from the lock screen.",
+      "description": "Turns off fun facts, tips and tricks on the lock screen. Your lock screen picture, including Windows Spotlight, stays as it is.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "actions": [
+        {
+          "type": "Registry",
+          "hive": "HKCU",
+          "key": "Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+          "name": "RotatingLockScreenOverlayEnabled",
+          "kind": "DWord",
+          "value": 0
+        },
+        {
+          "type": "Registry",
+          "hive": "HKCU",
+          "key": "Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+          "name": "SubscribedContent-338387Enabled",
+          "kind": "DWord",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "ads.settings",
+      "name": "Turn off suggestions in Settings",
+      "summary": "No more suggested content in the Settings app.",
+      "description": "Turns off the suggested content and promotions that Settings shows on some pages.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "actions": [
+        {
+          "type": "Registry",
+          "hive": "HKCU",
+          "key": "Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+          "name": "SubscribedContent-338393Enabled",
+          "kind": "DWord",
+          "value": 0
+        },
+        {
+          "type": "Registry",
+          "hive": "HKCU",
+          "key": "Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+          "name": "SubscribedContent-353694Enabled",
+          "kind": "DWord",
+          "value": 0
+        },
+        {
+          "type": "Registry",
+          "hive": "HKCU",
+          "key": "Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+          "name": "SubscribedContent-353696Enabled",
+          "kind": "DWord",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "ads.tips",
+      "name": "Turn off Windows tips and setup prompts",
+      "summary": "Stops \"Get even more out of Windows\" and welcome screens.",
+      "description": "Turns off tips and suggestions while you use Windows, the welcome experience after updates, and the \"Finish setting up your device\" screen.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "actions": [
+        {
+          "type": "Registry",
+          "hive": "HKCU",
+          "key": "Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+          "name": "SubscribedContent-338389Enabled",
+          "kind": "DWord",
+          "value": 0
+        },
+        {
+          "type": "Registry",
+          "hive": "HKCU",
+          "key": "Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+          "name": "SoftLandingEnabled",
+          "kind": "DWord",
+          "value": 0
+        },
+        {
+          "type": "Registry",
+          "hive": "HKCU",
+          "key": "Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+          "name": "SubscribedContent-310093Enabled",
+          "kind": "DWord",
+          "value": 0
+        },
+        {
+          "type": "Registry",
+          "hive": "HKCU",
+          "key": "Software\\Microsoft\\Windows\\CurrentVersion\\UserProfileEngagement",
+          "name": "ScoobeSystemSettingEnabled",
+          "kind": "DWord",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "ads.explorer",
+      "name": "Turn off File Explorer ads",
+      "summary": "No more OneDrive and Microsoft 365 promotions in File Explorer.",
+      "description": "Turns off sync provider notifications, which Windows uses to show OneDrive and Microsoft 365 offers in File Explorer.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "actions": [
+        {
+          "type": "Registry",
+          "hive": "HKCU",
+          "key": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+          "name": "ShowSyncProviderNotifications",
+          "kind": "DWord",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "ads.bing",
+      "name": "Turn off Bing in Start search",
+      "summary": "Start search shows only results from your PC.",
+      "description": "Stops Start search from sending what you type to Bing and from showing web results. Searching for apps, files and settings works as before.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "restart": true,
+      "actions": [
+        {
+          "type": "Registry",
+          "hive": "HKCU",
+          "key": "Software\\Policies\\Microsoft\\Windows\\Explorer",
+          "name": "DisableSearchBoxSuggestions",
+          "kind": "DWord",
+          "value": 1
+        },
+        {
+          "type": "Registry",
+          "hive": "HKCU",
+          "key": "Software\\Microsoft\\Windows\\CurrentVersion\\Search",
+          "name": "BingSearchEnabled",
+          "kind": "DWord",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "ads.search-highlights",
+      "name": "Turn off search highlights",
+      "summary": "Removes the daily pictures and trending searches in the search box.",
+      "description": "Turns off search highlights, the changing illustrations and trending content in the search box and search home.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "actions": [
+        {
+          "type": "Registry",
+          "hive": "HKCU",
+          "key": "Software\\Microsoft\\Windows\\CurrentVersion\\SearchSettings",
+          "name": "IsDynamicSearchBoxEnabled",
+          "kind": "DWord",
+          "value": 0
+        },
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Search",
+          "name": "EnableDynamicContentInWSB",
+          "kind": "DWord",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "ads.widgets",
+      "name": "Turn off Widgets and news",
+      "summary": "Removes the Widgets board and its news feed from the taskbar.",
+      "description": "Turns off Widgets with its news feed on Windows 11 and News and interests on Windows 10, by policy for every user.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "restart": true,
+      "actions": [
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Policies\\Microsoft\\Dsh",
+          "name": "AllowNewsAndInterests",
+          "kind": "DWord",
+          "value": 0
+        },
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Feeds",
+          "name": "EnableFeeds",
+          "kind": "DWord",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "ads.suggested-apps",
+      "name": "Stop automatic installs of suggested apps",
+      "summary": "Windows stops installing promoted apps on its own.",
+      "description": "Stops Windows from silently installing suggested apps and games and turns off the consumer experience that adds them. Apps already installed stay. Remove them under Bloatware Apps.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "goodToKnow": "The consumer experience policy is only fully honored on Enterprise and Education. The other values work on Home and Pro.",
+      "actions": [
+        {
+          "type": "Registry",
+          "hive": "HKCU",
+          "key": "Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+          "name": "SilentInstalledAppsEnabled",
+          "kind": "DWord",
+          "value": 0
+        },
+        {
+          "type": "Registry",
+          "hive": "HKCU",
+          "key": "Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+          "name": "PreInstalledAppsEnabled",
+          "kind": "DWord",
+          "value": 0
+        },
+        {
+          "type": "Registry",
+          "hive": "HKCU",
+          "key": "Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+          "name": "OemPreInstalledAppsEnabled",
+          "kind": "DWord",
+          "value": 0
+        },
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Policies\\Microsoft\\Windows\\CloudContent",
+          "name": "DisableWindowsConsumerFeatures",
+          "kind": "DWord",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "id": "ads.notifications",
+      "name": "Turn off suggestion notifications",
+      "summary": "No more notifications suggesting ways to use Windows.",
+      "description": "Turns off the Suggested notifications that Windows sends to promote features and settings.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "actions": [
+        {
+          "type": "Registry",
+          "hive": "HKCU",
+          "key": "Software\\Microsoft\\Windows\\CurrentVersion\\Notifications\\Settings\\Windows.SystemToast.Suggested",
+          "name": "Enabled",
+          "kind": "DWord",
+          "value": 0
+        }
+      ]
+    }
+  ]
+}

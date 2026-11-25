@@ -1,0 +1,125 @@
+{
+  "id": "onedrive",
+  "name": "OneDrive",
+  "description": "Stop OneDrive from starting, syncing or showing up in File Explorer, or remove it.",
+  "icon": "E753",
+  "kind": "list",
+  "order": 4,
+  "tweaks": [
+    {
+      "id": "onedrive.startup",
+      "name": "Stop OneDrive starting with Windows",
+      "summary": "OneDrive no longer opens when you sign in.",
+      "description": "Removes the OneDrive entry from your startup programs. OneDrive still works if you open it yourself.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "undo": "The startup entry is saved first. Undo puts it back.",
+      "actions": [
+        {
+          "type": "RegistryDelete",
+          "hive": "HKCU",
+          "key": "Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+          "name": "OneDrive"
+        }
+      ]
+    },
+    {
+      "id": "onedrive.navpane",
+      "name": "Remove OneDrive from the File Explorer sidebar",
+      "summary": "Hides the OneDrive item in the left pane of File Explorer.",
+      "description": "Hides OneDrive in the File Explorer navigation pane for your account. Your OneDrive folder and files stay where they are.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "restart": true,
+      "actions": [
+        {
+          "type": "Registry",
+          "hive": "HKCU",
+          "key": "Software\\Classes\\CLSID\\\\{018D5C66-4533-4307-9B53-224DE2ED1FE6}",
+          "name": "System.IsPinnedToNameSpaceTree",
+          "kind": "DWord",
+          "value": 0
+        },
+        {
+          "type": "Registry",
+          "hive": "HKCU",
+          "key": "Software\\Classes\\WOW6432Node\\CLSID\\\\{018D5C66-4533-4307-9B53-224DE2ED1FE6}",
+          "name": "System.IsPinnedToNameSpaceTree",
+          "kind": "DWord",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "onedrive.no-backup-prompt",
+      "name": "Stop \"back up your folders\" prompts",
+      "summary": "OneDrive no longer offers to move Desktop, Documents and Pictures to the cloud.",
+      "description": "Blocks OneDrive folder backup (Known Folder Move) by policy, so OneDrive stops asking to move your Desktop, Documents and Pictures folders. Folders already moved stay as they are.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "actions": [
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Policies\\Microsoft\\OneDrive",
+          "name": "KFMBlockOptIn",
+          "kind": "DWord",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "id": "onedrive.disable-sync",
+      "name": "Disable OneDrive sync",
+      "summary": "Blocks OneDrive from syncing files on this PC.",
+      "description": "Sets the policy that stops OneDrive from syncing for all users. Files already on the PC stay, but files that are online-only stay in the cloud and cannot be opened from this PC until you undo it.",
+      "risk": "Moderate",
+      "presets": [
+        "privacy",
+        "everything"
+      ],
+      "restart": true,
+      "goodToKnow": "Before you turn sync off, right-click your OneDrive folder and choose Always keep on this device if you want local copies of everything.",
+      "actions": [
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Policies\\Microsoft\\Windows\\OneDrive",
+          "name": "DisableFileSyncNGSC",
+          "kind": "DWord",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "id": "onedrive.uninstall",
+      "name": "Uninstall OneDrive",
+      "summary": "Removes the OneDrive app using Microsoft's own uninstaller.",
+      "description": "Closes OneDrive and runs the uninstaller that OneDrive registered with Windows. Files in your OneDrive folder on this PC are not deleted, and nothing is deleted from the cloud.",
+      "risk": "Moderate",
+      "presets": [
+        "privacy",
+        "everything"
+      ],
+      "appliedLabel": "Not installed",
+      "undo": "Undo runs the OneDrive installer that ships with Windows, if it is still there. If not, download OneDrive from microsoft.com.",
+      "actions": [
+        {
+          "type": "OneDriveUninstall"
+        }
+      ]
+    }
+  ]
+}

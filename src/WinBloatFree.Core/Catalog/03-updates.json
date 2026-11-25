@@ -1,0 +1,329 @@
+{
+  "id": "updates",
+  "name": "Windows Update",
+  "description": "Choose how much control Windows Update has. Pick one level, then add options below.",
+  "icon": "E895",
+  "kind": "updates",
+  "order": 3,
+  "tweaks": [
+    {
+      "id": "updates.level.leave",
+      "name": "Leave as is",
+      "summary": "Windows decides when to download and install updates. Nothing is changed.",
+      "description": "WinBloatFree does not touch Windows Update. If you set a level earlier and want Windows back to normal, undo that run in Undo / History.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy"
+      ],
+      "group": "wu-level",
+      "actions": []
+    },
+    {
+      "id": "updates.level.pause",
+      "name": "Pause updates",
+      "summary": "Stops all updates for a set time, then they resume on their own.",
+      "description": "Pauses feature and quality updates, the same way the Pause button in Settings does. When the time runs out, Windows installs the updates it missed and pausing becomes available again.",
+      "risk": "Moderate",
+      "presets": [],
+      "group": "wu-level",
+      "appliedLabel": "Paused",
+      "parameter": {
+        "name": "weeks",
+        "label": "Pause for",
+        "default": "5",
+        "options": [
+          {
+            "value": "1",
+            "label": "Pause for 1 week"
+          },
+          {
+            "value": "2",
+            "label": "Pause for 2 weeks"
+          },
+          {
+            "value": "3",
+            "label": "Pause for 3 weeks"
+          },
+          {
+            "value": "4",
+            "label": "Pause for 4 weeks"
+          },
+          {
+            "value": "5",
+            "label": "Pause for 5 weeks"
+          }
+        ]
+      },
+      "goodToKnow": "Windows allows up to 5 weeks. You can resume early in Settings > Windows Update.",
+      "undo": "Undo deletes the pause dates, and updates resume right away.",
+      "actions": [
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Microsoft\\WindowsUpdate\\UX\\Settings",
+          "name": "PauseUpdatesStartTime",
+          "kind": "String",
+          "value": "{nowUtc}",
+          "match": "Exists"
+        },
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Microsoft\\WindowsUpdate\\UX\\Settings",
+          "name": "PauseUpdatesExpiryTime",
+          "kind": "String",
+          "value": "{untilUtc}",
+          "match": "Exists"
+        },
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Microsoft\\WindowsUpdate\\UX\\Settings",
+          "name": "PauseFeatureUpdatesStartTime",
+          "kind": "String",
+          "value": "{nowUtc}",
+          "match": "Exists"
+        },
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Microsoft\\WindowsUpdate\\UX\\Settings",
+          "name": "PauseFeatureUpdatesEndTime",
+          "kind": "String",
+          "value": "{untilUtc}",
+          "match": "Exists"
+        },
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Microsoft\\WindowsUpdate\\UX\\Settings",
+          "name": "PauseQualityUpdatesStartTime",
+          "kind": "String",
+          "value": "{nowUtc}",
+          "match": "Exists"
+        },
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Microsoft\\WindowsUpdate\\UX\\Settings",
+          "name": "PauseQualityUpdatesEndTime",
+          "kind": "String",
+          "value": "{untilUtc}",
+          "match": "Exists"
+        }
+      ]
+    },
+    {
+      "id": "updates.level.security",
+      "name": "Security updates only",
+      "summary": "Installs monthly security fixes. Skips optional updates, previews and new features.",
+      "description": "Holds new Windows versions (feature updates) for 365 days, keeps driver updates out of Windows Update and turns off preview builds. Monthly quality updates, which carry the security fixes, still install as usual.",
+      "risk": "Safe",
+      "presets": [],
+      "group": "wu-level",
+      "appliedLabel": "Active",
+      "goodToKnow": "Windows Home ignores the feature update delay. On Home, use Block feature upgrades and drivers instead.",
+      "actions": [
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate",
+          "name": "DeferFeatureUpdates",
+          "kind": "DWord",
+          "value": 1
+        },
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate",
+          "name": "DeferFeatureUpdatesPeriodInDays",
+          "kind": "DWord",
+          "value": 365
+        },
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate",
+          "name": "ExcludeWUDriversInQualityUpdate",
+          "kind": "DWord",
+          "value": 1
+        },
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate",
+          "name": "ManagePreviewBuilds",
+          "kind": "DWord",
+          "value": 1
+        },
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate",
+          "name": "ManagePreviewBuildsPolicyValue",
+          "kind": "DWord",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "updates.level.block",
+      "name": "Block feature upgrades and drivers",
+      "summary": "Stays on your current Windows version and keeps your current drivers. Security fixes still install.",
+      "description": "Pins this PC to the Windows version it runs now and stops Windows Update from replacing your drivers. Monthly security and quality updates still install as usual.",
+      "risk": "Moderate",
+      "presets": [
+        "everything"
+      ],
+      "group": "wu-level",
+      "appliedLabel": "Active",
+      "goodToKnow": "Each Windows version gets security fixes for a limited time (24 months for Home and Pro on Windows 11). Before that ends, undo this or pick a newer version, or the PC stops getting security fixes.",
+      "undo": "These values usually do not exist now. Undo deletes them, and Windows goes back to its normal update behavior.",
+      "actions": [
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate",
+          "name": "TargetReleaseVersion",
+          "kind": "DWord",
+          "value": 1
+        },
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate",
+          "name": "ProductVersion",
+          "kind": "String",
+          "value": "{productVersion}"
+        },
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate",
+          "name": "TargetReleaseVersionInfo",
+          "kind": "String",
+          "value": "{displayVersion}"
+        },
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate",
+          "name": "ExcludeWUDriversInQualityUpdate",
+          "kind": "DWord",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "id": "updates.level.off",
+      "name": "Fully off",
+      "summary": "Stops the update service. No updates of any kind, including security fixes.",
+      "description": "Turns off automatic updates by policy and disables the Windows Update, Update Orchestrator and Windows Update Medic services and the scheduled start task. Nothing is downloaded or installed until you undo it.",
+      "risk": "Advanced",
+      "presets": [],
+      "group": "wu-level",
+      "appliedLabel": "Active",
+      "warning": "Your PC will stop getting security fixes, and Microsoft Defender may stop getting new virus definitions. Only use this on offline or test machines.",
+      "goodToKnow": "Windows protects the Update Medic service. If Windows refuses that one change, the other changes still apply and the result screen tells you.",
+      "actions": [
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate\\AU",
+          "name": "NoAutoUpdate",
+          "kind": "DWord",
+          "value": 1
+        },
+        {
+          "type": "Service",
+          "service": "wuauserv",
+          "startup": "Disabled",
+          "stop": true
+        },
+        {
+          "type": "Service",
+          "service": "UsoSvc",
+          "startup": "Disabled",
+          "stop": true
+        },
+        {
+          "type": "Service",
+          "service": "WaaSMedicSvc",
+          "startup": "Disabled",
+          "stop": true
+        },
+        {
+          "type": "Task",
+          "task": "\\Microsoft\\Windows\\WindowsUpdate\\Scheduled Start"
+        }
+      ]
+    },
+    {
+      "id": "updates.no-auto-restart",
+      "name": "Don't restart automatically while someone is signed in",
+      "summary": "Windows waits for you to restart instead of restarting on its own.",
+      "description": "Updates that need a restart wait until you restart yourself, as long as someone is signed in.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "actions": [
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate\\AU",
+          "name": "NoAutoRebootWithLoggedOnUsers",
+          "kind": "DWord",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "id": "updates.no-p2p",
+      "name": "Don't share update downloads with other PCs on the internet",
+      "summary": "Updates come only from Microsoft, not from other PCs.",
+      "description": "Delivery Optimization can download parts of updates from other PCs and upload your downloads to them. This makes the PC use only Microsoft's servers.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "actions": [
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Policies\\Microsoft\\Windows\\DeliveryOptimization",
+          "name": "DODownloadMode",
+          "kind": "DWord",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "updates.no-early-features",
+      "name": "Don't get new features as soon as they are ready",
+      "summary": "Turns off the \"Get the latest updates as soon as they are available\" switch.",
+      "description": "With this switch on, Windows turns on new features early through monthly updates. Turning it off means you get them later, after wider testing.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "actions": [
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Microsoft\\WindowsUpdate\\UX\\Settings",
+          "name": "IsContinuousInnovationOptedIn",
+          "kind": "DWord",
+          "value": 0
+        }
+      ]
+    }
+  ]
+}

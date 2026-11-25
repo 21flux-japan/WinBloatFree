@@ -1,0 +1,88 @@
+{
+  "id": "performance",
+  "name": "Performance",
+  "description": "Display and gaming settings that can cause stutter or slowdowns on some PCs.",
+  "icon": "E945",
+  "kind": "list",
+  "order": 8,
+  "tweaks": [
+    {
+      "id": "performance.windows-vrr",
+      "name": "Turn off Windows variable refresh rate",
+      "summary": "Fixes stutter and very low frame rates on the desktop and in windowed apps. Any GPU.",
+      "description": "Windows can apply variable refresh rate (G-SYNC, FreeSync, Adaptive-Sync) to DirectX 11 and 12 games that do not support it themselves. On some PCs this makes the desktop and windowed apps stutter, flicker or drop to very low frame rates, sometimes close to 1 fps. Turning it off fixes that. Games that support VRR themselves still use it. This is the Variable refresh rate switch in Settings > System > Display > Graphics, and works with any graphics card.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "everything"
+      ],
+      "goodToKnow": "Settings only shows this switch when your monitor and driver support VRR. Other graphics settings stored in the same value, such as Optimizations for windowed games and Auto HDR, are kept as they are.",
+      "undo": "The whole DirectXUserGlobalSettings value is saved first. Undo puts back exactly what was there, or removes it if it did not exist.",
+      "actions": [
+        {
+          "type": "RegistryToken",
+          "hive": "HKCU",
+          "key": "Software\\Microsoft\\DirectX\\UserGpuPreferences",
+          "name": "DirectXUserGlobalSettings",
+          "token": "VRROptimizeEnable",
+          "value": "0"
+        }
+      ]
+    },
+    {
+      "id": "performance.nvidia-gsync",
+      "name": "Turn off NVIDIA G-SYNC (driver setting)",
+      "summary": "Turns off G-SYNC in the NVIDIA driver for all apps. NVIDIA graphics cards only.",
+      "description": "Sets \"Enable G-SYNC globally\" in the NVIDIA driver's global 3D profile to off, the same setting as in NVIDIA Control Panel. This fixes flicker and stutter that some G-SYNC and G-SYNC Compatible monitors show on the desktop and in windowed apps. Games will not use G-SYNC either, so you may see tearing unless V-Sync is on. This is separate from the Windows variable refresh rate switch.",
+      "risk": "Moderate",
+      "presets": [],
+      "requires": "nvidia",
+      "restart": false,
+      "goodToKnow": "Shows \"Not applicable\" when no NVIDIA driver is installed. The change is made through the NVIDIA driver on this PC (nvapi64.dll), nothing is downloaded.",
+      "undo": "The old driver value is saved first. Undo puts it back, or removes the override so the driver default applies again.",
+      "actions": [
+        {
+          "type": "NvidiaDrs",
+          "settingId": 294973784,
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "performance.game-dvr",
+      "name": "Turn off background game recording",
+      "summary": "Stops Game Bar from recording gameplay in the background.",
+      "description": "Turns off Game DVR, which keeps recording the last minutes of gameplay so you can save a clip. This frees some GPU and disk use while gaming. Xbox Game Bar still opens with Win+G.",
+      "risk": "Moderate",
+      "presets": [
+        "everything"
+      ],
+      "actions": [
+        {
+          "type": "Registry",
+          "hive": "HKCU",
+          "key": "System\\GameConfigStore",
+          "name": "GameDVR_Enabled",
+          "kind": "DWord",
+          "value": 0
+        },
+        {
+          "type": "Registry",
+          "hive": "HKCU",
+          "key": "Software\\Microsoft\\Windows\\CurrentVersion\\GameDVR",
+          "name": "AppCaptureEnabled",
+          "kind": "DWord",
+          "value": 0
+        },
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Policies\\Microsoft\\Windows\\GameDVR",
+          "name": "AllowGameDVR",
+          "kind": "DWord",
+          "value": 0
+        }
+      ]
+    }
+  ]
+}

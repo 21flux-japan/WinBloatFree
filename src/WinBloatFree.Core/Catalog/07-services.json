@@ -1,0 +1,317 @@
+{
+  "id": "services",
+  "name": "Services",
+  "description": "Optional Windows services that many PCs never use.",
+  "icon": "E713",
+  "kind": "list",
+  "order": 7,
+  "tweaks": [
+    {
+      "id": "services.fax",
+      "name": "Disable Fax",
+      "summary": "Turns off the fax service.",
+      "description": "Only needed if you send or receive faxes through a modem connected to this PC.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "actions": [
+        {
+          "type": "Service",
+          "service": "Fax",
+          "startup": "Disabled",
+          "stop": true
+        }
+      ]
+    },
+    {
+      "id": "services.maps",
+      "name": "Disable Downloaded Maps Manager",
+      "summary": "Turns off the service for offline maps.",
+      "description": "Manages maps downloaded for offline use. Not needed once the Maps app is gone.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "actions": [
+        {
+          "type": "Service",
+          "service": "MapsBroker",
+          "startup": "Disabled",
+          "stop": true
+        }
+      ]
+    },
+    {
+      "id": "services.retail-demo",
+      "name": "Disable Retail Demo",
+      "summary": "Turns off the store demo mode service.",
+      "description": "Only used for PCs on display in shops.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "actions": [
+        {
+          "type": "Service",
+          "service": "RetailDemo",
+          "startup": "Disabled",
+          "stop": true
+        }
+      ]
+    },
+    {
+      "id": "services.remote-registry",
+      "name": "Disable Remote Registry",
+      "summary": "Stops other computers editing this PC's registry.",
+      "description": "Lets users on other computers change the registry on this PC. Disabled by default on most PCs, and safer that way.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "actions": [
+        {
+          "type": "Service",
+          "service": "RemoteRegistry",
+          "startup": "Disabled",
+          "stop": true
+        }
+      ]
+    },
+    {
+      "id": "services.wmp-network",
+      "name": "Disable Windows Media Player network sharing",
+      "summary": "Turns off media sharing from Windows Media Player Legacy.",
+      "description": "Shares your media library with other devices on the network through Windows Media Player Legacy.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "actions": [
+        {
+          "type": "Service",
+          "service": "WMPNetworkSvc",
+          "startup": "Disabled",
+          "stop": true
+        }
+      ]
+    },
+    {
+      "id": "services.diag-hub",
+      "name": "Disable Diagnostics Hub collector",
+      "summary": "Turns off a diagnostics collector used by developer tools.",
+      "description": "Collects real-time diagnostic events for Visual Studio and other developer tools. Leave on if you profile apps.",
+      "risk": "Safe",
+      "presets": [
+        "privacy",
+        "everything"
+      ],
+      "actions": [
+        {
+          "type": "Service",
+          "service": "diagnosticshub.standardcollector.service",
+          "startup": "Disabled",
+          "stop": true
+        }
+      ]
+    },
+    {
+      "id": "services.link-tracking",
+      "name": "Disable Distributed Link Tracking Client",
+      "summary": "Turns off tracking of moved files on network drives.",
+      "description": "Keeps shortcuts working when linked files move between NTFS drives on a network. Rarely needed at home.",
+      "risk": "Safe",
+      "presets": [
+        "privacy",
+        "everything"
+      ],
+      "actions": [
+        {
+          "type": "Service",
+          "service": "TrkWks",
+          "startup": "Disabled",
+          "stop": true
+        }
+      ]
+    },
+    {
+      "id": "services.insider",
+      "name": "Disable Windows Insider service",
+      "summary": "Turns off the Windows Insider Program service.",
+      "description": "Only needed if you take part in the Windows Insider Program for preview builds.",
+      "risk": "Safe",
+      "presets": [
+        "privacy",
+        "everything"
+      ],
+      "actions": [
+        {
+          "type": "Service",
+          "service": "wisvc",
+          "startup": "Disabled",
+          "stop": true
+        }
+      ]
+    },
+    {
+      "id": "services.geolocation",
+      "name": "Disable Geolocation service",
+      "summary": "Turns off location for all apps.",
+      "description": "Finds this PC's location for apps such as Weather and Maps, and for Find my device. With it off, no app can get your location.",
+      "risk": "Moderate",
+      "presets": [
+        "privacy",
+        "everything"
+      ],
+      "actions": [
+        {
+          "type": "Service",
+          "service": "lfsvc",
+          "startup": "Disabled",
+          "stop": true
+        }
+      ]
+    },
+    {
+      "id": "services.error-reporting",
+      "name": "Disable Windows Error Reporting service",
+      "summary": "Turns off the service that sends crash reports.",
+      "description": "Sends reports about crashes to Microsoft and checks for solutions. With it off, crash reports are not sent and you will not get suggested fixes.",
+      "risk": "Moderate",
+      "presets": [
+        "privacy",
+        "everything"
+      ],
+      "actions": [
+        {
+          "type": "Service",
+          "service": "WerSvc",
+          "startup": "Disabled",
+          "stop": true
+        }
+      ]
+    },
+    {
+      "id": "services.phone",
+      "name": "Disable Phone Service",
+      "summary": "Turns off telephony state for apps.",
+      "description": "Manages phone state on the device. Used by Phone Link for calls.",
+      "risk": "Moderate",
+      "presets": [
+        "everything"
+      ],
+      "actions": [
+        {
+          "type": "Service",
+          "service": "PhoneSvc",
+          "startup": "Disabled",
+          "stop": true
+        }
+      ]
+    },
+    {
+      "id": "services.sysmain",
+      "name": "Disable SysMain (Superfetch)",
+      "summary": "Stops Windows preloading apps into memory.",
+      "description": "SysMain learns which apps you use and preloads them into memory. On fast SSDs the gain is small. On hard drives apps may start slower without it.",
+      "risk": "Moderate",
+      "presets": [
+        "everything"
+      ],
+      "actions": [
+        {
+          "type": "Service",
+          "service": "SysMain",
+          "startup": "Disabled",
+          "stop": true
+        }
+      ]
+    },
+    {
+      "id": "services.xbox",
+      "name": "Disable Xbox services",
+      "summary": "Turns off Xbox sign-in, cloud saves and networking.",
+      "description": "Turns off Xbox Live Auth Manager, Xbox Live Game Save and Xbox Live Networking Service. Games that use Xbox sign-in or cloud saves will not work. Controllers keep working.",
+      "risk": "Moderate",
+      "presets": [],
+      "actions": [
+        {
+          "type": "Service",
+          "service": "XblAuthManager",
+          "startup": "Disabled",
+          "stop": true
+        },
+        {
+          "type": "Service",
+          "service": "XblGameSave",
+          "startup": "Disabled",
+          "stop": true
+        },
+        {
+          "type": "Service",
+          "service": "XboxNetApiSvc",
+          "startup": "Disabled",
+          "stop": true
+        }
+      ]
+    },
+    {
+      "id": "services.search",
+      "name": "Disable Windows Search indexing",
+      "summary": "Stops indexing files for search.",
+      "description": "The indexer keeps a fast search index of your files and email. Without it, searches in Start, File Explorer and Outlook are slower and less complete.",
+      "risk": "Advanced",
+      "presets": [],
+      "actions": [
+        {
+          "type": "Service",
+          "service": "WSearch",
+          "startup": "Disabled",
+          "stop": true
+        }
+      ]
+    },
+    {
+      "id": "services.print-spooler",
+      "name": "Disable Print Spooler",
+      "summary": "Turns off printing.",
+      "description": "Needed for every kind of printing, including Print to PDF. Only turn this off if you never print.",
+      "risk": "Advanced",
+      "presets": [],
+      "actions": [
+        {
+          "type": "Service",
+          "service": "Spooler",
+          "startup": "Disabled",
+          "stop": true
+        }
+      ]
+    },
+    {
+      "id": "services.biometrics",
+      "name": "Disable Windows Biometric Service",
+      "summary": "Turns off fingerprint and face sign-in.",
+      "description": "Needed for Windows Hello fingerprint and face sign-in. PIN and password sign-in keep working.",
+      "risk": "Advanced",
+      "presets": [],
+      "actions": [
+        {
+          "type": "Service",
+          "service": "WbioSrvc",
+          "startup": "Disabled",
+          "stop": true
+        }
+      ]
+    }
+  ]
+}

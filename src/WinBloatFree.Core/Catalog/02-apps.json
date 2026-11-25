@@ -1,0 +1,756 @@
+{
+  "id": "apps",
+  "name": "Bloatware Apps",
+  "description": "Preinstalled apps you can remove. Microsoft Store and system parts are never listed.",
+  "icon": "E71D",
+  "kind": "list",
+  "order": 2,
+  "tweaks": [
+    {
+      "id": "apps.bing-news",
+      "name": "Remove Microsoft News",
+      "summary": "News headlines app.",
+      "description": "Removes Microsoft News for every user on this PC and stops Windows from installing it for new accounts. Package: Microsoft.BingNews.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "appliedLabel": "Not installed",
+      "actions": [
+        {
+          "type": "Appx",
+          "package": "Microsoft.BingNews"
+        }
+      ]
+    },
+    {
+      "id": "apps.bing-weather",
+      "name": "Remove Weather",
+      "summary": "Weather app. The Widgets weather is separate.",
+      "description": "Removes Weather for every user on this PC and stops Windows from installing it for new accounts. Package: Microsoft.BingWeather.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "appliedLabel": "Not installed",
+      "actions": [
+        {
+          "type": "Appx",
+          "package": "Microsoft.BingWeather"
+        }
+      ]
+    },
+    {
+      "id": "apps.get-help",
+      "name": "Remove Get Help",
+      "summary": "Microsoft support chat app.",
+      "description": "Removes Get Help for every user on this PC and stops Windows from installing it for new accounts. Package: Microsoft.GetHelp.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "appliedLabel": "Not installed",
+      "actions": [
+        {
+          "type": "Appx",
+          "package": "Microsoft.GetHelp"
+        }
+      ]
+    },
+    {
+      "id": "apps.tips",
+      "name": "Remove Tips",
+      "summary": "Shows Windows tips and tutorials.",
+      "description": "Removes Tips for every user on this PC and stops Windows from installing it for new accounts. Package: Microsoft.Getstarted.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "appliedLabel": "Not installed",
+      "actions": [
+        {
+          "type": "Appx",
+          "package": "Microsoft.Getstarted"
+        }
+      ]
+    },
+    {
+      "id": "apps.solitaire",
+      "name": "Remove Microsoft Solitaire Collection",
+      "summary": "Card games with ads and an optional subscription.",
+      "description": "Removes Microsoft Solitaire Collection for every user on this PC and stops Windows from installing it for new accounts. Package: Microsoft.MicrosoftSolitaireCollection.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "appliedLabel": "Not installed",
+      "actions": [
+        {
+          "type": "Appx",
+          "package": "Microsoft.MicrosoftSolitaireCollection"
+        }
+      ]
+    },
+    {
+      "id": "apps.office-hub",
+      "name": "Remove Microsoft 365 (Office) app",
+      "summary": "Launcher for Microsoft 365. Installed Office apps are not affected.",
+      "description": "Removes Microsoft 365 (Office) app for every user on this PC and stops Windows from installing it for new accounts. Package: Microsoft.MicrosoftOfficeHub.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "appliedLabel": "Not installed",
+      "actions": [
+        {
+          "type": "Appx",
+          "package": "Microsoft.MicrosoftOfficeHub"
+        }
+      ]
+    },
+    {
+      "id": "apps.people",
+      "name": "Remove People",
+      "summary": "Old contacts app.",
+      "description": "Removes People for every user on this PC and stops Windows from installing it for new accounts. Package: Microsoft.People.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "appliedLabel": "Not installed",
+      "actions": [
+        {
+          "type": "Appx",
+          "package": "Microsoft.People"
+        }
+      ]
+    },
+    {
+      "id": "apps.feedback-hub",
+      "name": "Remove Feedback Hub",
+      "summary": "App for sending feedback to Microsoft.",
+      "description": "Removes Feedback Hub for every user on this PC and stops Windows from installing it for new accounts. Package: Microsoft.WindowsFeedbackHub.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "appliedLabel": "Not installed",
+      "actions": [
+        {
+          "type": "Appx",
+          "package": "Microsoft.WindowsFeedbackHub"
+        }
+      ]
+    },
+    {
+      "id": "apps.maps",
+      "name": "Remove Maps",
+      "summary": "Offline maps app, retired by Microsoft.",
+      "description": "Removes Maps for every user on this PC and stops Windows from installing it for new accounts. Package: Microsoft.WindowsMaps.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "appliedLabel": "Not installed",
+      "actions": [
+        {
+          "type": "Appx",
+          "package": "Microsoft.WindowsMaps"
+        }
+      ]
+    },
+    {
+      "id": "apps.movies-tv",
+      "name": "Remove Movies & TV",
+      "summary": "Video store and player. Media Player still plays videos.",
+      "description": "Removes Movies & TV for every user on this PC and stops Windows from installing it for new accounts. Package: Microsoft.ZuneVideo.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "appliedLabel": "Not installed",
+      "actions": [
+        {
+          "type": "Appx",
+          "package": "Microsoft.ZuneVideo"
+        }
+      ]
+    },
+    {
+      "id": "apps.clipchamp",
+      "name": "Remove Clipchamp",
+      "summary": "Online video editor.",
+      "description": "Removes Clipchamp for every user on this PC and stops Windows from installing it for new accounts. Package: Clipchamp.Clipchamp.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "appliedLabel": "Not installed",
+      "actions": [
+        {
+          "type": "Appx",
+          "package": "Clipchamp.Clipchamp"
+        }
+      ]
+    },
+    {
+      "id": "apps.cortana",
+      "name": "Remove Cortana",
+      "summary": "Old voice assistant, retired by Microsoft.",
+      "description": "Removes Cortana for every user on this PC and stops Windows from installing it for new accounts. Package: Microsoft.549981C3F5F10.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "appliedLabel": "Not installed",
+      "actions": [
+        {
+          "type": "Appx",
+          "package": "Microsoft.549981C3F5F10"
+        }
+      ]
+    },
+    {
+      "id": "apps.skype",
+      "name": "Remove Skype",
+      "summary": "Skype was shut down by Microsoft in 2025.",
+      "description": "Removes Skype for every user on this PC and stops Windows from installing it for new accounts. Package: Microsoft.SkypeApp.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "appliedLabel": "Not installed",
+      "actions": [
+        {
+          "type": "Appx",
+          "package": "Microsoft.SkypeApp"
+        }
+      ]
+    },
+    {
+      "id": "apps.mixed-reality",
+      "name": "Remove Mixed Reality Portal",
+      "summary": "Only needed for Windows Mixed Reality headsets.",
+      "description": "Removes Mixed Reality Portal for every user on this PC and stops Windows from installing it for new accounts. Package: Microsoft.MixedReality.Portal.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "appliedLabel": "Not installed",
+      "actions": [
+        {
+          "type": "Appx",
+          "package": "Microsoft.MixedReality.Portal"
+        }
+      ]
+    },
+    {
+      "id": "apps.3d-viewer",
+      "name": "Remove 3D Viewer",
+      "summary": "Viewer for 3D models.",
+      "description": "Removes 3D Viewer for every user on this PC and stops Windows from installing it for new accounts. Package: Microsoft.Microsoft3DViewer.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "appliedLabel": "Not installed",
+      "actions": [
+        {
+          "type": "Appx",
+          "package": "Microsoft.Microsoft3DViewer"
+        }
+      ]
+    },
+    {
+      "id": "apps.paint-3d",
+      "name": "Remove Paint 3D",
+      "summary": "Retired 3D drawing app. Classic Paint is not affected.",
+      "description": "Removes Paint 3D for every user on this PC and stops Windows from installing it for new accounts. Package: Microsoft.MSPaint.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "appliedLabel": "Not installed",
+      "actions": [
+        {
+          "type": "Appx",
+          "package": "Microsoft.MSPaint"
+        }
+      ]
+    },
+    {
+      "id": "apps.power-automate",
+      "name": "Remove Power Automate",
+      "summary": "Desktop automation tool.",
+      "description": "Removes Power Automate for every user on this PC and stops Windows from installing it for new accounts. Package: Microsoft.PowerAutomateDesktop.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "appliedLabel": "Not installed",
+      "actions": [
+        {
+          "type": "Appx",
+          "package": "Microsoft.PowerAutomateDesktop"
+        }
+      ]
+    },
+    {
+      "id": "apps.family",
+      "name": "Remove Microsoft Family Safety",
+      "summary": "Parental controls app. Family settings still work online.",
+      "description": "Removes Microsoft Family Safety for every user on this PC and stops Windows from installing it for new accounts. Package: MicrosoftCorporationII.MicrosoftFamily.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "appliedLabel": "Not installed",
+      "actions": [
+        {
+          "type": "Appx",
+          "package": "MicrosoftCorporationII.MicrosoftFamily"
+        }
+      ]
+    },
+    {
+      "id": "apps.dev-home",
+      "name": "Remove Dev Home",
+      "summary": "Developer dashboard, retired by Microsoft.",
+      "description": "Removes Dev Home for every user on this PC and stops Windows from installing it for new accounts. Package: Microsoft.Windows.DevHome.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "appliedLabel": "Not installed",
+      "actions": [
+        {
+          "type": "Appx",
+          "package": "Microsoft.Windows.DevHome"
+        }
+      ]
+    },
+    {
+      "id": "apps.bing-search",
+      "name": "Remove Bing Search",
+      "summary": "Bing web search add-on for Windows.",
+      "description": "Removes Bing Search for every user on this PC and stops Windows from installing it for new accounts. Package: Microsoft.BingSearch.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "appliedLabel": "Not installed",
+      "actions": [
+        {
+          "type": "Appx",
+          "package": "Microsoft.BingSearch"
+        }
+      ]
+    },
+    {
+      "id": "apps.teams",
+      "name": "Remove Microsoft Teams (personal)",
+      "summary": "Free Teams app. Work Teams installed by your company is not removed.",
+      "description": "Removes Microsoft Teams (personal) for every user on this PC and stops Windows from installing it for new accounts. Package: MSTeams, MicrosoftTeams.",
+      "risk": "Moderate",
+      "presets": [
+        "privacy",
+        "everything"
+      ],
+      "appliedLabel": "Not installed",
+      "actions": [
+        {
+          "type": "Appx",
+          "package": "MSTeams"
+        },
+        {
+          "type": "Appx",
+          "package": "MicrosoftTeams"
+        }
+      ]
+    },
+    {
+      "id": "apps.outlook",
+      "name": "Remove Outlook (new)",
+      "summary": "New Outlook app. Classic Outlook from Office is not affected.",
+      "description": "Removes Outlook (new) for every user on this PC and stops Windows from installing it for new accounts. Package: Microsoft.OutlookForWindows.",
+      "risk": "Moderate",
+      "presets": [
+        "privacy",
+        "everything"
+      ],
+      "appliedLabel": "Not installed",
+      "actions": [
+        {
+          "type": "Appx",
+          "package": "Microsoft.OutlookForWindows"
+        }
+      ]
+    },
+    {
+      "id": "apps.onenote",
+      "name": "Remove OneNote for Windows 10",
+      "summary": "Old OneNote app. OneNote from Microsoft 365 is not affected.",
+      "description": "Removes OneNote for Windows 10 for every user on this PC and stops Windows from installing it for new accounts. Package: Microsoft.Office.OneNote.",
+      "risk": "Moderate",
+      "presets": [
+        "privacy",
+        "everything"
+      ],
+      "appliedLabel": "Not installed",
+      "actions": [
+        {
+          "type": "Appx",
+          "package": "Microsoft.Office.OneNote"
+        }
+      ]
+    },
+    {
+      "id": "apps.todo",
+      "name": "Remove Microsoft To Do",
+      "summary": "Task list app. Your lists stay in your Microsoft account.",
+      "description": "Removes Microsoft To Do for every user on this PC and stops Windows from installing it for new accounts. Package: Microsoft.Todos.",
+      "risk": "Moderate",
+      "presets": [
+        "privacy",
+        "everything"
+      ],
+      "appliedLabel": "Not installed",
+      "actions": [
+        {
+          "type": "Appx",
+          "package": "Microsoft.Todos"
+        }
+      ]
+    },
+    {
+      "id": "apps.media-player",
+      "name": "Remove Media Player",
+      "summary": "Default music and video player on Windows 11.",
+      "description": "Removes Media Player for every user on this PC and stops Windows from installing it for new accounts. Package: Microsoft.ZuneMusic.",
+      "risk": "Moderate",
+      "presets": [
+        "everything"
+      ],
+      "appliedLabel": "Not installed",
+      "actions": [
+        {
+          "type": "Appx",
+          "package": "Microsoft.ZuneMusic"
+        }
+      ]
+    },
+    {
+      "id": "apps.sound-recorder",
+      "name": "Remove Sound Recorder",
+      "summary": "Voice recording app.",
+      "description": "Removes Sound Recorder for every user on this PC and stops Windows from installing it for new accounts. Package: Microsoft.WindowsSoundRecorder.",
+      "risk": "Moderate",
+      "presets": [
+        "everything"
+      ],
+      "appliedLabel": "Not installed",
+      "actions": [
+        {
+          "type": "Appx",
+          "package": "Microsoft.WindowsSoundRecorder"
+        }
+      ]
+    },
+    {
+      "id": "apps.clock",
+      "name": "Remove Clock (Alarms)",
+      "summary": "Alarms, timers and focus sessions.",
+      "description": "Removes Clock (Alarms) for every user on this PC and stops Windows from installing it for new accounts. Package: Microsoft.WindowsAlarms.",
+      "risk": "Moderate",
+      "presets": [
+        "everything"
+      ],
+      "appliedLabel": "Not installed",
+      "actions": [
+        {
+          "type": "Appx",
+          "package": "Microsoft.WindowsAlarms"
+        }
+      ]
+    },
+    {
+      "id": "apps.sticky-notes",
+      "name": "Remove Sticky Notes",
+      "summary": "Notes app. Notes stay in your Microsoft account if you synced them.",
+      "description": "Removes Sticky Notes for every user on this PC and stops Windows from installing it for new accounts. Package: Microsoft.MicrosoftStickyNotes.",
+      "risk": "Moderate",
+      "presets": [
+        "everything"
+      ],
+      "appliedLabel": "Not installed",
+      "actions": [
+        {
+          "type": "Appx",
+          "package": "Microsoft.MicrosoftStickyNotes"
+        }
+      ]
+    },
+    {
+      "id": "apps.quick-assist",
+      "name": "Remove Quick Assist",
+      "summary": "Remote help tool. Also used by scammers, so some people remove it.",
+      "description": "Removes Quick Assist for every user on this PC and stops Windows from installing it for new accounts. Package: MicrosoftCorporationII.QuickAssist.",
+      "risk": "Moderate",
+      "presets": [
+        "everything"
+      ],
+      "appliedLabel": "Not installed",
+      "actions": [
+        {
+          "type": "Appx",
+          "package": "MicrosoftCorporationII.QuickAssist"
+        }
+      ]
+    },
+    {
+      "id": "apps.phone-link",
+      "name": "Remove Phone Link",
+      "summary": "Connects your phone to the PC.",
+      "description": "Removes Phone Link for every user on this PC and stops Windows from installing it for new accounts. Package: Microsoft.YourPhone, MicrosoftWindows.CrossDevice.",
+      "risk": "Moderate",
+      "presets": [
+        "everything"
+      ],
+      "appliedLabel": "Not installed",
+      "actions": [
+        {
+          "type": "Appx",
+          "package": "Microsoft.YourPhone"
+        },
+        {
+          "type": "Appx",
+          "package": "MicrosoftWindows.CrossDevice"
+        }
+      ]
+    },
+    {
+      "id": "apps.camera",
+      "name": "Remove Camera",
+      "summary": "Camera app. Other apps can still use the webcam.",
+      "description": "Removes Camera for every user on this PC and stops Windows from installing it for new accounts. Package: Microsoft.WindowsCamera.",
+      "risk": "Moderate",
+      "presets": [
+        "everything"
+      ],
+      "appliedLabel": "Not installed",
+      "actions": [
+        {
+          "type": "Appx",
+          "package": "Microsoft.WindowsCamera"
+        }
+      ]
+    },
+    {
+      "id": "apps.sponsored",
+      "name": "Remove Sponsored third-party apps",
+      "summary": "Spotify, Disney+, Facebook, Instagram, TikTok, Prime Video, Candy Crush, Netflix, WhatsApp, LinkedIn.",
+      "description": "Removes promoted third-party apps that Windows installs or pins for you: Spotify, Disney+, Facebook, Instagram, TikTok, Prime Video, Candy Crush, Netflix, WhatsApp, LinkedIn. If you installed one of these yourself and use it, leave this unchecked. Packages that are not on this PC are skipped.",
+      "risk": "Moderate",
+      "presets": [
+        "everything"
+      ],
+      "appliedLabel": "Not installed",
+      "actions": [
+        {
+          "type": "Appx",
+          "package": "SpotifyAB.SpotifyMusic"
+        },
+        {
+          "type": "Appx",
+          "package": "Disney.37853FC22B2CE"
+        },
+        {
+          "type": "Appx",
+          "package": "*.Facebook"
+        },
+        {
+          "type": "Appx",
+          "package": "Facebook.*"
+        },
+        {
+          "type": "Appx",
+          "package": "*.Instagram"
+        },
+        {
+          "type": "Appx",
+          "package": "BytedancePte.Ltd.TikTok"
+        },
+        {
+          "type": "Appx",
+          "package": "AmazonVideo.PrimeVideo"
+        },
+        {
+          "type": "Appx",
+          "package": "king.com.*"
+        },
+        {
+          "type": "Appx",
+          "package": "*.Netflix"
+        },
+        {
+          "type": "Appx",
+          "package": "5319275A.WhatsAppDesktop"
+        },
+        {
+          "type": "Appx",
+          "package": "*.LinkedInforWindows"
+        }
+      ]
+    },
+    {
+      "id": "apps.xbox",
+      "name": "Remove Xbox apps",
+      "summary": "Xbox app, Game Bar and Xbox sign-in. Some PC games and Game Pass need these.",
+      "description": "Removes Xbox apps for every user on this PC and stops Windows from installing it for new accounts. Package: Microsoft.GamingApp, Microsoft.XboxGamingOverlay, Microsoft.XboxIdentityProvider, Microsoft.XboxSpeechToTextOverlay, Microsoft.Xbox.TCUI, Microsoft.XboxApp.",
+      "risk": "Advanced",
+      "presets": [],
+      "appliedLabel": "Not installed",
+      "actions": [
+        {
+          "type": "Appx",
+          "package": "Microsoft.GamingApp"
+        },
+        {
+          "type": "Appx",
+          "package": "Microsoft.XboxGamingOverlay"
+        },
+        {
+          "type": "Appx",
+          "package": "Microsoft.XboxIdentityProvider"
+        },
+        {
+          "type": "Appx",
+          "package": "Microsoft.XboxSpeechToTextOverlay"
+        },
+        {
+          "type": "Appx",
+          "package": "Microsoft.Xbox.TCUI"
+        },
+        {
+          "type": "Appx",
+          "package": "Microsoft.XboxApp"
+        }
+      ]
+    },
+    {
+      "id": "apps.photos",
+      "name": "Remove Photos",
+      "summary": "Default image viewer. Without it, pictures open in another app or not at all.",
+      "description": "Removes Photos for every user on this PC and stops Windows from installing it for new accounts. Package: Microsoft.Windows.Photos.",
+      "risk": "Advanced",
+      "presets": [],
+      "appliedLabel": "Not installed",
+      "actions": [
+        {
+          "type": "Appx",
+          "package": "Microsoft.Windows.Photos"
+        }
+      ]
+    },
+    {
+      "id": "apps.calculator",
+      "name": "Remove Calculator",
+      "summary": "Windows Calculator. Most people want to keep this.",
+      "description": "Removes Calculator for every user on this PC and stops Windows from installing it for new accounts. Package: Microsoft.WindowsCalculator.",
+      "risk": "Advanced",
+      "presets": [],
+      "appliedLabel": "Not installed",
+      "actions": [
+        {
+          "type": "Appx",
+          "package": "Microsoft.WindowsCalculator"
+        }
+      ]
+    },
+    {
+      "id": "apps.notepad",
+      "name": "Remove Notepad",
+      "summary": "Text editor. Most people want to keep this. Its AI features can be turned off in Copilot & AI instead.",
+      "description": "Removes Notepad for every user on this PC and stops Windows from installing it for new accounts. Package: Microsoft.WindowsNotepad.",
+      "risk": "Advanced",
+      "presets": [],
+      "appliedLabel": "Not installed",
+      "actions": [
+        {
+          "type": "Appx",
+          "package": "Microsoft.WindowsNotepad"
+        }
+      ]
+    },
+    {
+      "id": "apps.paint",
+      "name": "Remove Paint",
+      "summary": "Paint. Its AI features can be turned off in Copilot & AI instead.",
+      "description": "Removes Paint for every user on this PC and stops Windows from installing it for new accounts. Package: Microsoft.Paint.",
+      "risk": "Advanced",
+      "presets": [],
+      "appliedLabel": "Not installed",
+      "actions": [
+        {
+          "type": "Appx",
+          "package": "Microsoft.Paint"
+        }
+      ]
+    },
+    {
+      "id": "apps.snipping-tool",
+      "name": "Remove Snipping Tool",
+      "summary": "Screenshot tool used by Win+Shift+S and the Print Screen key.",
+      "description": "Removes Snipping Tool for every user on this PC and stops Windows from installing it for new accounts. Package: Microsoft.ScreenSketch.",
+      "risk": "Advanced",
+      "presets": [],
+      "appliedLabel": "Not installed",
+      "actions": [
+        {
+          "type": "Appx",
+          "package": "Microsoft.ScreenSketch"
+        }
+      ]
+    }
+  ]
+}

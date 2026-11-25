@@ -1,0 +1,404 @@
+{
+  "id": "telemetry",
+  "name": "Telemetry & Privacy",
+  "description": "Controls what Windows collects about how you use this PC and sends to Microsoft.",
+  "icon": "EA18",
+  "kind": "list",
+  "order": 1,
+  "tweaks": [
+    {
+      "id": "telemetry.diagnostic-data",
+      "name": "Disable diagnostic data",
+      "summary": "Stops sending optional usage and device data to Microsoft.",
+      "description": "Sets the diagnostic data policy to its lowest level and limits diagnostic logs and memory dumps. On Home and Pro the lowest level Windows allows is Required, so a small amount of basic device data is still sent. Optional data, such as which apps you use and how, is no longer sent.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "restart": true,
+      "goodToKnow": "Settings will show \"Some settings are managed by your organization\" on the diagnostics page. That is normal when a policy is set.",
+      "actions": [
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection",
+          "name": "AllowTelemetry",
+          "kind": "DWord",
+          "value": 0
+        },
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\DataCollection",
+          "name": "AllowTelemetry",
+          "kind": "DWord",
+          "value": 0
+        },
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection",
+          "name": "LimitDiagnosticLogCollection",
+          "kind": "DWord",
+          "value": 1
+        },
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection",
+          "name": "LimitDumpCollection",
+          "kind": "DWord",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "id": "telemetry.diagtrack",
+      "name": "Disable Connected User Experiences and Telemetry",
+      "summary": "Turns off DiagTrack, the service that collects and uploads diagnostic data.",
+      "description": "Connected User Experiences and Telemetry (DiagTrack) collects usage, performance and diagnostic data and sends it to Microsoft. Turning it off stops most background telemetry. Windows keeps working normally.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "undo": "The old startup type and registry value are saved first. Undo puts them back and starts the service again, even after a restart.",
+      "actions": [
+        {
+          "type": "Service",
+          "service": "DiagTrack",
+          "startup": "Disabled",
+          "stop": true
+        },
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SYSTEM\\CurrentControlSet\\Control\\WMI\\Autologger\\Diagtrack-Listener",
+          "name": "Start",
+          "kind": "DWord",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "telemetry.dmwappush",
+      "name": "Disable WAP Push Message Routing Service",
+      "summary": "Turns off dmwappushservice, used for device management and by some telemetry.",
+      "description": "Device Management Wireless Application Protocol (WAP) Push Message Routing Service routes management messages from company device management (MDM) systems, such as Intune, to this PC. Some telemetry also uses it. Home PCs do not need it.",
+      "risk": "Moderate",
+      "presets": [
+        "privacy",
+        "everything"
+      ],
+      "goodToKnow": "Leave this on if your work or school manages this PC. Without it, management messages may not arrive.",
+      "actions": [
+        {
+          "type": "Service",
+          "service": "dmwappushservice",
+          "startup": "Disabled",
+          "stop": true
+        }
+      ]
+    },
+    {
+      "id": "telemetry.advertising-id",
+      "name": "Disable advertising ID",
+      "summary": "Apps can no longer use a shared ID to show you personalized ads.",
+      "description": "Windows gives each user an advertising ID that apps can read to track you across apps and show personalized ads. This turns it off for you and blocks it by policy for every user.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "actions": [
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Policies\\Microsoft\\Windows\\AdvertisingInfo",
+          "name": "DisabledByGroupPolicy",
+          "kind": "DWord",
+          "value": 1
+        },
+        {
+          "type": "Registry",
+          "hive": "HKCU",
+          "key": "Software\\Microsoft\\Windows\\CurrentVersion\\AdvertisingInfo",
+          "name": "Enabled",
+          "kind": "DWord",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "telemetry.activity-history",
+      "name": "Disable activity history",
+      "summary": "Windows stops keeping a list of the apps, files and sites you open.",
+      "description": "Activity history records what you do on the PC, such as apps, files and web pages, and can upload it to your Microsoft account. This stops recording and uploading it.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "actions": [
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Policies\\Microsoft\\Windows\\System",
+          "name": "EnableActivityFeed",
+          "kind": "DWord",
+          "value": 0
+        },
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Policies\\Microsoft\\Windows\\System",
+          "name": "PublishUserActivities",
+          "kind": "DWord",
+          "value": 0
+        },
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Policies\\Microsoft\\Windows\\System",
+          "name": "UploadUserActivities",
+          "kind": "DWord",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "telemetry.tailored",
+      "name": "Disable tailored experiences",
+      "summary": "Microsoft stops using your data to pick tips and offers for you.",
+      "description": "With tailored experiences on, Microsoft uses your diagnostic data to choose tips, ads and recommendations. This turns that off.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "actions": [
+        {
+          "type": "Registry",
+          "hive": "HKCU",
+          "key": "Software\\Policies\\Microsoft\\Windows\\CloudContent",
+          "name": "DisableTailoredExperiencesWithDiagnosticData",
+          "kind": "DWord",
+          "value": 1
+        },
+        {
+          "type": "Registry",
+          "hive": "HKCU",
+          "key": "Software\\Microsoft\\Windows\\CurrentVersion\\Privacy",
+          "name": "TailoredExperiencesWithDiagnosticDataEnabled",
+          "kind": "DWord",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "telemetry.feedback",
+      "name": "Disable feedback requests",
+      "summary": "No more pop-ups asking you to rate Windows or send feedback.",
+      "description": "Sets the feedback frequency to Never and hides feedback notifications for all users. The Feedback Hub app still works if you open it yourself.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "actions": [
+        {
+          "type": "Registry",
+          "hive": "HKCU",
+          "key": "Software\\Microsoft\\Siuf\\Rules",
+          "name": "NumberOfSIUFInPeriod",
+          "kind": "DWord",
+          "value": 0
+        },
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection",
+          "name": "DoNotShowFeedbackNotifications",
+          "kind": "DWord",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "id": "telemetry.inking",
+      "name": "Disable inking & typing personalization",
+      "summary": "Stops learning from what you type. Suggestions get less personal.",
+      "description": "Windows builds a personal word list from your typing and handwriting to improve suggestions and recognition, and does not upload it once this is off. Text suggestions and handwriting recognition still work, but are less tuned to you.",
+      "risk": "Moderate",
+      "presets": [
+        "privacy",
+        "everything"
+      ],
+      "actions": [
+        {
+          "type": "Registry",
+          "hive": "HKCU",
+          "key": "Software\\Microsoft\\InputPersonalization",
+          "name": "RestrictImplicitInkCollection",
+          "kind": "DWord",
+          "value": 1
+        },
+        {
+          "type": "Registry",
+          "hive": "HKCU",
+          "key": "Software\\Microsoft\\InputPersonalization",
+          "name": "RestrictImplicitTextCollection",
+          "kind": "DWord",
+          "value": 1
+        },
+        {
+          "type": "Registry",
+          "hive": "HKCU",
+          "key": "Software\\Microsoft\\InputPersonalization\\TrainedDataStore",
+          "name": "HarvestContacts",
+          "kind": "DWord",
+          "value": 0
+        },
+        {
+          "type": "Registry",
+          "hive": "HKCU",
+          "key": "Software\\Microsoft\\Personalization\\Settings",
+          "name": "AcceptedPrivacyPolicy",
+          "kind": "DWord",
+          "value": 0
+        },
+        {
+          "type": "Registry",
+          "hive": "HKCU",
+          "key": "Software\\Microsoft\\Windows\\CurrentVersion\\CPSS\\Store\\InkingAndTypingPersonalization",
+          "name": "Value",
+          "kind": "DWord",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "telemetry.speech",
+      "name": "Disable online speech recognition",
+      "summary": "Your voice is no longer sent to Microsoft for recognition.",
+      "description": "Online speech recognition sends your voice to Microsoft to turn it into text. With it off, voice typing and other features that need online speech stop working. Offline speech features keep working.",
+      "risk": "Moderate",
+      "presets": [
+        "privacy",
+        "everything"
+      ],
+      "actions": [
+        {
+          "type": "Registry",
+          "hive": "HKCU",
+          "key": "Software\\Microsoft\\Speech_OneCore\\Settings\\OnlineSpeechPrivacy",
+          "name": "HasAccepted",
+          "kind": "DWord",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "telemetry.app-launch",
+      "name": "Disable app launch tracking",
+      "summary": "Start and search stop ranking apps by how often you open them.",
+      "description": "Windows tracks which apps you start so it can show your most used apps in Start and search. This turns the tracking off. The Most used list in Start goes away.",
+      "risk": "Safe",
+      "presets": [
+        "privacy",
+        "everything"
+      ],
+      "actions": [
+        {
+          "type": "Registry",
+          "hive": "HKCU",
+          "key": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+          "name": "Start_TrackProgs",
+          "kind": "DWord",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "telemetry.error-reporting",
+      "name": "Disable Windows Error Reporting",
+      "summary": "Crash reports are no longer sent to Microsoft.",
+      "description": "When an app or Windows crashes, Windows Error Reporting sends a report to Microsoft and sometimes offers a fix. With this off, no reports are sent and you will not get those fixes.",
+      "risk": "Moderate",
+      "presets": [
+        "privacy",
+        "everything"
+      ],
+      "actions": [
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Error Reporting",
+          "name": "Disabled",
+          "kind": "DWord",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "id": "telemetry.tasks",
+      "name": "Block telemetry scheduled tasks",
+      "summary": "Turns off Compatibility Appraiser, CEIP and similar data tasks.",
+      "description": "Disables scheduled tasks that collect compatibility and usage data: Microsoft Compatibility Appraiser, ProgramDataUpdater, the Customer Experience Improvement Program tasks, disk diagnostic data collection and feedback tasks. Tasks that do not exist on your Windows version are skipped.",
+      "risk": "Advanced",
+      "presets": [
+        "everything"
+      ],
+      "goodToKnow": "Compatibility Appraiser checks whether your PC can take the next Windows version. With it off, Windows may be slower to offer an upgrade, or offer one without a compatibility check.",
+      "actions": [
+        {
+          "type": "Task",
+          "task": "\\Microsoft\\Windows\\Application Experience\\Microsoft Compatibility Appraiser"
+        },
+        {
+          "type": "Task",
+          "task": "\\Microsoft\\Windows\\Application Experience\\Microsoft Compatibility Appraiser Exp"
+        },
+        {
+          "type": "Task",
+          "task": "\\Microsoft\\Windows\\Application Experience\\ProgramDataUpdater"
+        },
+        {
+          "type": "Task",
+          "task": "\\Microsoft\\Windows\\Application Experience\\MareBackup"
+        },
+        {
+          "type": "Task",
+          "task": "\\Microsoft\\Windows\\Customer Experience Improvement Program\\Consolidator"
+        },
+        {
+          "type": "Task",
+          "task": "\\Microsoft\\Windows\\Customer Experience Improvement Program\\UsbCeip"
+        },
+        {
+          "type": "Task",
+          "task": "\\Microsoft\\Windows\\Autochk\\Proxy"
+        },
+        {
+          "type": "Task",
+          "task": "\\Microsoft\\Windows\\DiskDiagnostic\\Microsoft-Windows-DiskDiagnosticDataCollector"
+        },
+        {
+          "type": "Task",
+          "task": "\\Microsoft\\Windows\\Feedback\\Siuf\\DmClient"
+        },
+        {
+          "type": "Task",
+          "task": "\\Microsoft\\Windows\\Feedback\\Siuf\\DmClientOnScenarioDownload"
+        }
+      ]
+    }
+  ]
+}

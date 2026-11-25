@@ -1,0 +1,654 @@
+<Window x:Class="WinBloatFree.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:WinBloatFree"
+        Title="WinBloatFree" Width="1280" Height="800" MinWidth="1060" MinHeight="640"
+        WindowStartupLocation="CenterScreen" UseLayoutRounding="True"
+        Background="{DynamicResource WindowBackground}" Foreground="{DynamicResource Text}"
+        FontFamily="{StaticResource UiFont}" FontSize="14"
+        Icon="Assets/app.png">
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="44" ResizeBorderThickness="6" GlassFrameThickness="0" CornerRadius="0" UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
+
+    <Window.Resources>
+        <local:InverseBoolToVisibility x:Key="InvBoolToVis" />
+        <local:NotEmptyToVisibility x:Key="NotEmptyToVis" />
+
+        <!-- One tweak row: checkbox, name and one-line explanation, risk tag, status chip. -->
+        <DataTemplate x:Key="TweakRow">
+            <Border Style="{StaticResource RowCard}">
+                <Border.InputBindings>
+                    <MouseBinding Gesture="LeftClick" Command="{Binding DataContext.SelectTweakCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
+                </Border.InputBindings>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="20" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="100" />
+                        <ColumnDefinition Width="120" />
+                    </Grid.ColumnDefinitions>
+                    <CheckBox Style="{StaticResource Check}" IsChecked="{Binding IsChecked, Mode=TwoWay}" IsEnabled="{Binding IsAvailable}" AutomationProperties.Name="{Binding Name}" />
+                    <StackPanel Grid.Column="1" Margin="12,0" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="Medium" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding Summary}" FontSize="12.5" Foreground="{DynamicResource Text3}" Margin="0,2,0,0" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                    <ContentPresenter Grid.Column="2" Content="{Binding}" ContentTemplate="{StaticResource RiskPillTemplate}" VerticalAlignment="Center" />
+                    <ContentPresenter Grid.Column="3" Content="{Binding}" ContentTemplate="{StaticResource StatusChipTemplate}" VerticalAlignment="Center" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <!-- Windows Update level row: radio, name, explanation, pause length or risk tag, warning. -->
+        <DataTemplate x:Key="LevelRow">
+            <Border>
+                <Border.Style>
+                    <Style TargetType="Border" BasedOn="{StaticResource RowCard}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsChecked}" Value="True">
+                                <Setter Property="BorderBrush" Value="{DynamicResource Accent}" />
+                                <Setter Property="BorderThickness" Value="2" />
+                                <Setter Property="Padding" Value="15,8" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <Border.InputBindings>
+                    <MouseBinding Gesture="LeftClick" Command="{Binding DataContext.SelectTweakCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
+                </Border.InputBindings>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="20" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <RadioButton Style="{StaticResource Radio}" GroupName="{Binding Id}" IsChecked="{Binding IsChecked, Mode=TwoWay}" AutomationProperties.Name="{Binding Name}" />
+                    <StackPanel Grid.Column="1" Margin="12,0" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="Medium" />
+                        <TextBlock Text="{Binding Summary}" FontSize="12.5" Foreground="{DynamicResource Text3}" Margin="0,2,0,0" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                        <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource StatusChipTemplate}" Margin="0,0,8,0"
+                                          Visibility="{Binding ShowLevelStatus, Converter={StaticResource BoolToVis}}" />
+                        <ComboBox Style="{StaticResource Combo}" Width="160" ItemsSource="{Binding Options}"
+                                  SelectedItem="{Binding SelectedOption, Mode=TwoWay}" Visibility="{Binding HasParameter, Converter={StaticResource BoolToVis}}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Label}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource RiskPillTemplate}"
+                                          Visibility="{Binding ShowLevelRisk, Converter={StaticResource BoolToVis}}" />
+                    </StackPanel>
+                    <Border Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Margin="12,10,0,2" Padding="12,9" CornerRadius="4" HorizontalAlignment="Left" MaxWidth="560"
+                            Background="{DynamicResource WarnBg}" BorderBrush="{DynamicResource WarnBorder}" BorderThickness="1"
+                            Visibility="{Binding HasWarning, Converter={StaticResource BoolToVis}}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="&#xE7BA;" Style="{StaticResource Icon}" FontSize="14" Foreground="{DynamicResource Adv}" VerticalAlignment="Top" Margin="0,1,10,0" />
+                            <TextBlock Grid.Column="1" Text="{Binding Warning}" FontSize="12.5" TextWrapping="Wrap" Foreground="{DynamicResource Text}" />
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <!-- Small colored pill with free text, used in the review dialog. -->
+        <Style x:Key="CountPill" TargetType="Border">
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Padding" Value="8,2,9,2" />
+            <Setter Property="Margin" Value="0,0,6,0" />
+        </Style>
+    </Window.Resources>
+
+    <Grid x:Name="Root">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="44" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- ======================================================== title bar -->
+        <Grid Grid.Row="0">
+            <StackPanel Orientation="Horizontal" Margin="16,0,0,0" VerticalAlignment="Center">
+                <Image Source="Assets/app.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality" />
+                <TextBlock Text="WinBloatFree" FontSize="13" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding VersionText}" FontSize="12" Foreground="{DynamicResource Text3}" Margin="8,0,0,0" VerticalAlignment="Center" />
+                <Border Margin="14,0,0,0" Padding="9,2" CornerRadius="10" Background="{DynamicResource Layer2}" BorderBrush="{DynamicResource CardBorder}" BorderThickness="1" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <Grid Width="10" Height="10" Margin="0,0,7,0" VerticalAlignment="Center">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition /><ColumnDefinition Width="1" /><ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition /><RowDefinition Height="1" /><RowDefinition />
+                            </Grid.RowDefinitions>
+                            <Rectangle Fill="{DynamicResource Accent}" />
+                            <Rectangle Grid.Column="2" Fill="{DynamicResource Accent}" />
+                            <Rectangle Grid.Row="2" Fill="{DynamicResource Accent}" />
+                            <Rectangle Grid.Row="2" Grid.Column="2" Fill="{DynamicResource Accent}" />
+                        </Grid>
+                        <TextBlock Text="{Binding OsText}" FontSize="12" Foreground="{DynamicResource Text2}" />
+                    </StackPanel>
+                </Border>
+                <Border Margin="8,0,0,0" Padding="9,2" CornerRadius="10" Background="{DynamicResource Layer2}" BorderBrush="{DynamicResource CardBorder}" BorderThickness="1" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <Ellipse Width="7" Height="7" Margin="0,0,6,0" VerticalAlignment="Center">
+                            <Ellipse.Style>
+                                <Style TargetType="Ellipse">
+                                    <Setter Property="Fill" Value="{DynamicResource Safe}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsAdmin}" Value="False">
+                                            <Setter Property="Fill" Value="{DynamicResource Adv}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Ellipse.Style>
+                        </Ellipse>
+                        <TextBlock Text="{Binding AdminText}" FontSize="12" Foreground="{DynamicResource Text2}" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Style="{StaticResource CaptionBtn}" FontSize="14" Content="&#xE706;" ToolTip="Switch between dark and light" Command="{Binding ToggleThemeCommand}" WindowChrome.IsHitTestVisibleInChrome="True" />
+                <Button Style="{StaticResource CaptionBtn}" Content="&#xE921;" ToolTip="Minimize" Click="OnMinimize" WindowChrome.IsHitTestVisibleInChrome="True" />
+                <Button x:Name="MaxButton" Style="{StaticResource CaptionBtn}" Content="&#xE922;" ToolTip="Maximize" Click="OnMaximize" WindowChrome.IsHitTestVisibleInChrome="True" />
+                <Button Style="{StaticResource CloseBtn}" Content="&#xE8BB;" ToolTip="Close" Click="OnClose" WindowChrome.IsHitTestVisibleInChrome="True" />
+            </StackPanel>
+        </Grid>
+
+        <!-- ======================================================== body -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="252" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- sidebar -->
+            <Grid Margin="8,4,8,12">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <TextBlock Text="Categories" Style="{StaticResource SectionLabel}" Margin="14,14,0,6" />
+                <ItemsControl Grid.Row="1" ItemsSource="{Binding Categories}" Focusable="False">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Button Style="{StaticResource NavBtn}" Tag="{Binding IsActive}"
+                                    Command="{Binding DataContext.SelectCategoryCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="ic" Text="{Binding Glyph}" Style="{StaticResource Icon}" Foreground="{DynamicResource Text2}" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Name}" Margin="12,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Grid.Column="2" FontSize="12" VerticalAlignment="Center">
+                                        <Run Text="{Binding CountSelected, Mode=OneWay}" FontWeight="SemiBold" Foreground="{DynamicResource Text2}" /><Run Text="{Binding CountTotal, Mode=OneWay}" Foreground="{DynamicResource Text3}" />
+                                    </TextBlock>
+                                </Grid>
+                            </Button>
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                    <Setter TargetName="ic" Property="Foreground" Value="{DynamicResource Accent}" />
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock Grid.Row="2" Text="Restore" Style="{StaticResource SectionLabel}" Margin="14,14,0,6" />
+                <Button Grid.Row="3" Style="{StaticResource NavBtn}" Tag="{Binding IsHistoryActive}" Command="{Binding ShowHistoryCommand}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="&#xE81C;">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource Icon}">
+                                    <Setter Property="Foreground" Value="{DynamicResource Text2}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsHistoryActive}" Value="True">
+                                            <Setter Property="Foreground" Value="{DynamicResource Accent}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <TextBlock Grid.Column="1" Text="Undo / History" Margin="12,0,0,0" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="2" Text="{Binding RunsText}" FontSize="12" Foreground="{DynamicResource Text3}" VerticalAlignment="Center" />
+                    </Grid>
+                </Button>
+                <Border Grid.Row="5" BorderBrush="{DynamicResource Stroke}" BorderThickness="0,1,0,0" Margin="6,6,6,0" Padding="8,12,8,0">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource Caption}" LineHeight="18" Text="Open source under the MIT license. Works offline. Makes no network calls." />
+                        <StackPanel Orientation="Horizontal" Margin="-8,4,0,0">
+                            <Button Style="{StaticResource LinkBtn}" FontSize="12" Content="Source code" Command="{Binding OpenRepoCommand}" ToolTip="{x:Static local:MainViewModel.RepoUrl}" />
+                            <Button Style="{StaticResource LinkBtn}" FontSize="12" Content="Report an issue" Command="{Binding OpenIssuesCommand}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- content -->
+            <Border Grid.Column="1" Background="{DynamicResource Layer}" BorderBrush="{DynamicResource Stroke}" BorderThickness="1,1,0,0" CornerRadius="8,0,0,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- main column -->
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <!-- toolbar: presets and search -->
+                        <Grid Margin="24,16,24,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="230" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Preset" FontSize="12" Foreground="{DynamicResource Text3}" VerticalAlignment="Center" Margin="0,0,12,0" />
+                            <Border Grid.Column="1" Background="{DynamicResource Layer3}" BorderBrush="{DynamicResource CardBorder}" BorderThickness="1" CornerRadius="6" Padding="3">
+                                <StackPanel Orientation="Horizontal">
+                                    <RadioButton Style="{StaticResource SegItem}" GroupName="preset" Content="Recommended" IsChecked="{Binding IsRecommended, Mode=TwoWay}"
+                                                 ToolTip="Safe changes that most people want. Keeps Windows Update as it is." />
+                                    <RadioButton Style="{StaticResource SegItem}" GroupName="preset" Content="Privacy" IsChecked="{Binding IsPrivacy, Mode=TwoWay}" Margin="2,0,0,0"
+                                                 ToolTip="Recommended, plus more privacy changes that may turn off features some people use." />
+                                    <RadioButton Style="{StaticResource SegItem}" GroupName="preset" Content="Everything" IsChecked="{Binding IsEverything, Mode=TwoWay}" Margin="2,0,0,0"
+                                                 ToolTip="Almost everything. Never removes essential apps, never turns updates fully off." />
+                                    <RadioButton Style="{StaticResource SegItem}" GroupName="preset" Content="Custom" IsChecked="{Binding IsCustom, Mode=TwoWay}" Margin="2,0,0,0"
+                                                 ToolTip="Your own selection." />
+                                </StackPanel>
+                            </Border>
+                            <TextBox x:Name="SearchBox" Grid.Column="3" Style="{StaticResource SearchBox}" Tag="Search all tweaks"
+                                     Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Delay=150}" AutomationProperties.Name="Search all tweaks" />
+                        </Grid>
+
+                        <!-- page title -->
+                        <Grid Grid.Row="1" Margin="24,20,24,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="{Binding PageTitle}" FontFamily="{StaticResource DisplayFont}" FontSize="28" FontWeight="SemiBold" />
+                                <TextBlock Text="{Binding PageSubtitle}" FontSize="13" Foreground="{DynamicResource Text2}" Margin="0,4,0,0" TextWrapping="Wrap" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom" Visibility="{Binding ShowListActions, Converter={StaticResource BoolToVis}}">
+                                <Button Style="{StaticResource LinkBtn}" Content="Select all" Command="{Binding SelectAllCommand}" />
+                                <Button Style="{StaticResource LinkBtn}" Content="Clear" Command="{Binding ClearVisibleCommand}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom" Visibility="{Binding ShowHistoryView, Converter={StaticResource BoolToVis}}">
+                                <Button Style="{StaticResource LinkBtn}" Content="Open history folder" Command="{Binding OpenHistoryFolderCommand}" ToolTip="{Binding HistoryDirectory}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- list header -->
+                        <Grid Grid.Row="2" Margin="41,0,41,6" Visibility="{Binding ShowList, Converter={StaticResource BoolToVis}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="20" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="100" />
+                                <ColumnDefinition Width="120" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="1" Margin="12,0" Text="Tweak" FontSize="12" Foreground="{DynamicResource Text3}" />
+                            <TextBlock Grid.Column="2" Text="Risk" FontSize="12" Foreground="{DynamicResource Text3}" />
+                            <TextBlock Grid.Column="3" Text="Status now" FontSize="12" Foreground="{DynamicResource Text3}" />
+                        </Grid>
+
+                        <!-- tweak list (category or search results) -->
+                        <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto" Padding="24,0,24,16" Focusable="False"
+                                      Visibility="{Binding ShowList, Converter={StaticResource BoolToVis}}">
+                            <StackPanel>
+                                <ItemsControl ItemsSource="{Binding VisibleTweaks}" ItemTemplate="{StaticResource TweakRow}" Focusable="False" />
+                                <TextBlock Text="Nothing matches. Try another word, such as a service or registry name." Style="{StaticResource Body2}" Margin="0,8,0,0"
+                                           Visibility="{Binding ShowEmptySearch, Converter={StaticResource BoolToVis}}" />
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <!-- Windows Update levels -->
+                        <ScrollViewer Grid.Row="2" Grid.RowSpan="2" VerticalScrollBarVisibility="Auto" Padding="24,0,24,16" Focusable="False"
+                                      Visibility="{Binding ShowUpdates, Converter={StaticResource BoolToVis}}">
+                            <StackPanel>
+                                <ItemsControl ItemsSource="{Binding CurrentCategory.Levels}" ItemTemplate="{StaticResource LevelRow}" Focusable="False" />
+                                <TextBlock Text="Options" FontSize="14" FontWeight="SemiBold" Margin="0,14,0,8" />
+                                <ItemsControl ItemsSource="{Binding CurrentCategory.Options}" ItemTemplate="{StaticResource TweakRow}" Focusable="False" />
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <!-- Undo / History -->
+                        <ScrollViewer Grid.Row="2" Grid.RowSpan="2" VerticalScrollBarVisibility="Auto" Padding="24,0,24,16" Focusable="False"
+                                      Visibility="{Binding ShowHistoryView, Converter={StaticResource BoolToVis}}">
+                            <StackPanel>
+                                <Border Background="{DynamicResource Card}" BorderBrush="{DynamicResource CardBorder}" BorderThickness="1" CornerRadius="6" Padding="16,14"
+                                        Visibility="{Binding HasNoRuns, Converter={StaticResource BoolToVis}}">
+                                    <TextBlock Style="{StaticResource Body2}" Text="No runs yet. When you apply changes, the previous state of everything they touch is saved here first, so you can put it back later." />
+                                </Border>
+                                <ItemsControl ItemsSource="{Binding Runs}" Focusable="False">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="{DynamicResource Card}" BorderBrush="{DynamicResource CardBorder}" BorderThickness="1" CornerRadius="6" Padding="16,12" Margin="0,0,0,6">
+                                                <StackPanel>
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <StackPanel>
+                                                            <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="SemiBold" />
+                                                            <TextBlock FontSize="12.5" Foreground="{DynamicResource Text3}" Margin="0,3,0,0">
+                                                                <Run Text="{Binding Summary, Mode=OneWay}" /><Run Text="  ·  " /><Run Text="{Binding RestoreNote, Mode=OneWay}" />
+                                                            </TextBlock>
+                                                        </StackPanel>
+                                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding StateText}" FontSize="12" Foreground="{DynamicResource Text3}" VerticalAlignment="Center" Margin="0,0,12,0" />
+                                                            <Button Style="{StaticResource Btn}" Content="Undo this run" Height="30"
+                                                                    Command="{Binding DataContext.UndoRunCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
+                                                        </StackPanel>
+                                                    </Grid>
+                                                    <Expander Style="{StaticResource GroupExpander}" Margin="0,10,0,0">
+                                                        <Expander.Header>
+                                                            <TextBlock Text="Details" FontSize="13" />
+                                                        </Expander.Header>
+                                                        <ItemsControl ItemsSource="{Binding Entries}" Margin="12,0,12,8">
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <Grid Margin="0,3">
+                                                                        <Grid.ColumnDefinitions>
+                                                                            <ColumnDefinition Width="80" />
+                                                                            <ColumnDefinition Width="*" />
+                                                                        </Grid.ColumnDefinitions>
+                                                                        <TextBlock x:Name="res" Text="{Binding Result}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Text2}" />
+                                                                        <StackPanel Grid.Column="1">
+                                                                            <TextBlock Text="{Binding Name}" FontSize="12.5" />
+                                                                            <TextBlock Text="{Binding Target}" FontFamily="{StaticResource MonoFont}" FontSize="11.5" Foreground="{DynamicResource Text3}" TextWrapping="Wrap" />
+                                                                            <TextBlock Text="{Binding Message}" FontSize="12" Foreground="{DynamicResource Text3}" TextWrapping="Wrap"
+                                                                                       Visibility="{Binding Message, Converter={StaticResource NotEmptyToVis}}" />
+                                                                        </StackPanel>
+                                                                    </Grid>
+                                                                    <DataTemplate.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsFailed}" Value="True">
+                                                                            <Setter TargetName="res" Property="Foreground" Value="{DynamicResource Adv}" />
+                                                                        </DataTrigger>
+                                                                    </DataTemplate.Triggers>
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                    </Expander>
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <TextBlock Style="{StaticResource Caption}" Margin="2,8,0,0">
+                                    <Run Text="Saved in " /><Run Text="{Binding HistoryDirectory, Mode=OneWay}" FontFamily="{StaticResource MonoFont}" />
+                                </TextBlock>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
+
+                    <!-- detail pane -->
+                    <Border Grid.Column="1" Width="300" BorderBrush="{DynamicResource Stroke}" BorderThickness="1,0,0,0"
+                            Visibility="{Binding ShowDetail, Converter={StaticResource BoolToVis}}">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Focusable="False">
+                            <StackPanel Margin="16,18,16,16" DataContext="{Binding FocusedTweak}">
+                                <TextBlock Text="{Binding Name}" FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap" LineHeight="22" />
+                                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                    <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource RiskPillTemplate}" Margin="0,0,6,0"
+                                                      Visibility="{Binding IsLeaveAsIs, Converter={StaticResource InvBoolToVis}}" />
+                                    <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource StatusChipTemplate}"
+                                                      Visibility="{Binding StatusText, Converter={StaticResource NotEmptyToVis}}" />
+                                </StackPanel>
+                                <Border Margin="0,12,0,0" Padding="10,8" CornerRadius="4" Background="{DynamicResource WarnBg}" BorderBrush="{DynamicResource WarnBorder}" BorderThickness="1"
+                                        Visibility="{Binding HasWarning, Converter={StaticResource BoolToVis}}">
+                                    <TextBlock Text="{Binding Warning}" FontSize="12.5" TextWrapping="Wrap" />
+                                </Border>
+
+                                <TextBlock Text="What it does" Style="{StaticResource SectionLabel}" Margin="0,18,0,6" />
+                                <TextBlock Text="{Binding Description}" Style="{StaticResource Body2}" />
+
+                                <TextBlock Text="What changes" Style="{StaticResource SectionLabel}" Margin="0,18,0,6"
+                                           Visibility="{Binding Changes, Converter={StaticResource NotEmptyToVis}}" />
+                                <Border Background="{DynamicResource Code}" BorderBrush="{DynamicResource CardBorder}" BorderThickness="1" CornerRadius="6"
+                                        Visibility="{Binding Changes, Converter={StaticResource NotEmptyToVis}}">
+                                    <ItemsControl ItemsSource="{Binding Changes}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border BorderBrush="{DynamicResource CardBorder}" BorderThickness="0,0,0,1" Padding="10,8">
+                                                    <StackPanel>
+                                                        <TextBlock Text="{Binding Label}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Text3}" />
+                                                        <TextBlock Text="{Binding Target}" FontFamily="{StaticResource MonoFont}" FontSize="12" TextWrapping="Wrap" Margin="0,3,0,0" />
+                                                        <TextBlock FontFamily="{StaticResource MonoFont}" FontSize="12" TextWrapping="Wrap" Margin="0,2,0,0">
+                                                            <Run x:Name="from" Text="{Binding From, Mode=OneWay}" Foreground="{DynamicResource Text2}" /><Run x:Name="arrow" Text=" → " Foreground="{DynamicResource Text3}" /><Run Text="{Binding To, Mode=OneWay}" Foreground="{DynamicResource Accent}" FontWeight="SemiBold" />
+                                                        </TextBlock>
+                                                    </StackPanel>
+                                                </Border>
+                                                <DataTemplate.Triggers>
+                                                    <DataTrigger Binding="{Binding HasFrom}" Value="False">
+                                                        <Setter TargetName="arrow" Property="Text" Value="" />
+                                                    </DataTrigger>
+                                                </DataTemplate.Triggers>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Border>
+
+                                <TextBlock Text="Good to know" Style="{StaticResource SectionLabel}" Margin="0,18,0,6" Visibility="{Binding HasGoodToKnow, Converter={StaticResource BoolToVis}}" />
+                                <TextBlock Text="{Binding GoodToKnow}" Style="{StaticResource Body2}" Visibility="{Binding HasGoodToKnow, Converter={StaticResource BoolToVis}}" />
+
+                                <TextBlock Text="How undo works" Style="{StaticResource SectionLabel}" Margin="0,18,0,6" />
+                                <TextBlock Text="{Binding UndoText}" Style="{StaticResource Body2}" />
+
+                                <Button Style="{StaticResource LinkBtn}" Content="View tweak definition (JSON)" Margin="-8,14,0,0" HorizontalAlignment="Left"
+                                        Command="{Binding DataContext.ShowJsonCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- ======================================================== bottom bar -->
+        <Border Grid.Row="2" BorderBrush="{DynamicResource Stroke}" BorderThickness="0,1,0,0" Padding="24,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock FontSize="13">
+                        <Run Text="{Binding PendingText, Mode=OneWay}" FontWeight="SemiBold" /><Run Text=" " /><Run Text="{Binding PendingCategoriesText, Mode=OneWay}" />
+                    </TextBlock>
+                    <TextBlock Text="{Binding StatusLine}" FontSize="12" Foreground="{DynamicResource Text3}" Margin="0,2,0,0" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <CheckBox Style="{StaticResource Check}" Content="Create restore point first" IsChecked="{Binding CreateRestorePoint, Mode=TwoWay}" Margin="0,0,22,0"
+                              ToolTip="Creates a Windows System Restore point before anything changes." />
+                    <Button Style="{StaticResource Btn}" Content="Clear selection" Command="{Binding ClearSelectionCommand}" Margin="0,0,10,0" />
+                    <Button Style="{StaticResource BtnPrimary}" Content="Review changes" Command="{Binding OpenReviewCommand}" MinWidth="130" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ======================================================== review dialog -->
+        <Grid Grid.Row="1" Grid.RowSpan="2" Background="{DynamicResource Scrim}" Visibility="{Binding IsReviewOpen, Converter={StaticResource BoolToVis}}">
+            <Border Style="{StaticResource DialogFrame}" Width="600" MaxHeight="660" Margin="0,20">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <StackPanel Margin="24,22,24,12">
+                        <TextBlock Text="{Binding ReviewTitle}" FontSize="20" FontWeight="SemiBold" />
+                        <TextBlock Style="{StaticResource Body2}" Margin="0,6,0,0"
+                                   Text="Nothing has changed yet. Check the list, then select Apply. Every change can be undone later from Undo / History, except removed apps, which you can reinstall from the Microsoft Store." />
+                        <Grid Margin="0,12,0,0">
+                            <StackPanel Orientation="Horizontal">
+                                <Border Style="{StaticResource CountPill}" Background="{DynamicResource SafeBg}">
+                                    <TextBlock Text="{Binding ReviewSafe}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Safe}" />
+                                </Border>
+                                <Border Style="{StaticResource CountPill}" Background="{DynamicResource ModBg}" Visibility="{Binding ReviewHasModerate, Converter={StaticResource BoolToVis}}">
+                                    <TextBlock Text="{Binding ReviewModerate}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Mod}" />
+                                </Border>
+                                <Border Style="{StaticResource CountPill}" Background="{DynamicResource AdvBg}" Visibility="{Binding ReviewHasAdvanced, Converter={StaticResource BoolToVis}}">
+                                    <TextBlock Text="{Binding ReviewAdvanced}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Adv}" />
+                                </Border>
+                            </StackPanel>
+                            <Border HorizontalAlignment="Right" CornerRadius="4" Background="{DynamicResource OnBg}" Padding="9,2" Visibility="{Binding ReviewHasRestart, Converter={StaticResource BoolToVis}}">
+                                <TextBlock Text="{Binding ReviewRestart}" FontSize="12" Foreground="{DynamicResource Text2}" />
+                            </Border>
+                        </Grid>
+                        <ItemsControl ItemsSource="{Binding ReviewWarnings}" Margin="0,10,0,0" Visibility="{Binding ReviewHasWarnings, Converter={StaticResource BoolToVis}}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Padding="10,8" CornerRadius="4" Background="{DynamicResource WarnBg}" BorderBrush="{DynamicResource WarnBorder}" BorderThickness="1" Margin="0,0,0,4">
+                                        <TextBlock Text="{Binding}" FontSize="12.5" TextWrapping="Wrap" />
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                    <ScrollViewer Grid.Row="1" Margin="24,0,24,12" VerticalScrollBarVisibility="Auto" Focusable="False">
+                        <ItemsControl ItemsSource="{Binding ReviewGroups}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Expander Style="{StaticResource GroupExpander}" IsExpanded="{Binding IsExpanded, Mode=TwoWay}">
+                                        <Expander.Header>
+                                            <TextBlock FontSize="13">
+                                                <Run Text="{Binding Name, Mode=OneWay}" FontWeight="SemiBold" /><Run Text="   " /><Run Text="{Binding CountText, Mode=OneWay}" Foreground="{DynamicResource Text3}" />
+                                            </TextBlock>
+                                        </Expander.Header>
+                                        <ItemsControl ItemsSource="{Binding Items}" Margin="0,0,0,6">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Grid Margin="38,4,14,4">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="100" />
+                                                            <ColumnDefinition Width="56" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Text="{Binding Name}" FontSize="13" Foreground="{DynamicResource Text2}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                                        <ContentPresenter Grid.Column="1" Content="{Binding}" ContentTemplate="{StaticResource RiskPillTemplate}" />
+                                                        <TextBlock Grid.Column="2" Text="Restart" FontSize="12" Foreground="{DynamicResource Text3}" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                                   Visibility="{Binding NeedsRestart, Converter={StaticResource BoolToVis}}" />
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </Expander>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                    <Border Grid.Row="2" Background="{DynamicResource DlgFoot}" CornerRadius="0,0,8,8" BorderBrush="{DynamicResource Stroke}" BorderThickness="0,1,0,0" Padding="24,16,24,20">
+                        <StackPanel>
+                            <CheckBox Style="{StaticResource Check}" Content="Create a system restore point before applying" IsChecked="{Binding CreateRestorePoint, Mode=TwoWay}" />
+                            <TextBlock Style="{StaticResource Caption}" Margin="30,4,0,0" Text="Takes about a minute. If something goes wrong, you can roll back with Windows System Restore." />
+                            <Grid Margin="0,16,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="8" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Button Style="{StaticResource Btn}" Content="Back" Command="{Binding CloseReviewCommand}" IsCancel="True" />
+                                <Button Grid.Column="2" Style="{StaticResource BtnPrimary}" Content="{Binding ApplyText}" Command="{Binding ApplyCommand}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- ======================================================== progress and result dialog -->
+        <Grid Grid.Row="1" Grid.RowSpan="2" Background="{DynamicResource Scrim}" Visibility="{Binding IsResultOpen, Converter={StaticResource BoolToVis}}">
+            <Border Style="{StaticResource DialogFrame}" Width="540" MaxHeight="600">
+                <StackPanel Margin="24,22,24,20">
+                    <TextBlock Text="{Binding ResultTitle}" FontSize="20" FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding ResultText}" Style="{StaticResource Body2}" Margin="0,6,0,0" />
+                    <StackPanel Margin="0,16,0,0" Visibility="{Binding IsResultDone, Converter={StaticResource InvBoolToVis}}">
+                        <Border Height="4" CornerRadius="2" Background="{DynamicResource OnBg}" ClipToBounds="True">
+                            <Border CornerRadius="2" Background="{DynamicResource Accent}" HorizontalAlignment="Stretch" RenderTransformOrigin="0,0.5">
+                                <Border.RenderTransform>
+                                    <ScaleTransform ScaleX="{Binding ProgressValue}" />
+                                </Border.RenderTransform>
+                            </Border>
+                        </Border>
+                        <TextBlock Text="{Binding ProgressText}" Style="{StaticResource Caption}" Margin="0,8,0,0" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                    </StackPanel>
+                    <ScrollViewer MaxHeight="260" Margin="0,12,0,0" VerticalScrollBarVisibility="Auto" Visibility="{Binding ResultLines.Count, Converter={StaticResource NotEmptyToVis}}">
+                        <ItemsControl ItemsSource="{Binding ResultLines}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" FontSize="12.5" Foreground="{DynamicResource Text2}" TextWrapping="Wrap" Margin="0,0,0,6" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                    <Button Style="{StaticResource BtnPrimary}" Content="Close" HorizontalAlignment="Right" MinWidth="110" Margin="0,16,0,0"
+                            Command="{Binding CloseResultCommand}" Visibility="{Binding IsResultDone, Converter={StaticResource BoolToVis}}" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- ======================================================== tweak definition (JSON) -->
+        <Grid Grid.Row="1" Grid.RowSpan="2" Background="{DynamicResource Scrim}" Visibility="{Binding IsJsonOpen, Converter={StaticResource BoolToVis}}">
+            <Border Style="{StaticResource DialogFrame}" Width="680" Height="540">
+                <Grid Margin="24,22,24,20">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="Tweak definition" FontSize="20" FontWeight="SemiBold" />
+                        <TextBlock Style="{StaticResource Body2}" Margin="0,4,0,12" Text="This is the exact definition built into this version of WinBloatFree. The same file is in the source code." />
+                    </StackPanel>
+                    <TextBox Grid.Row="1" Style="{StaticResource CodeBox}" Text="{Binding FocusedTweak.JsonText, Mode=OneWay}" />
+                    <Button Grid.Row="2" Style="{StaticResource Btn}" Content="Close" HorizontalAlignment="Right" MinWidth="110" Margin="0,16,0,0" Command="{Binding CloseJsonCommand}" />
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- ======================================================== confirm -->
+        <Grid Grid.Row="1" Grid.RowSpan="2" Background="{DynamicResource Scrim}" Visibility="{Binding IsConfirmOpen, Converter={StaticResource BoolToVis}}">
+            <Border Style="{StaticResource DialogFrame}" Width="460">
+                <StackPanel Margin="24,22,24,20">
+                    <TextBlock Text="{Binding ConfirmTitle}" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding ConfirmText}" Style="{StaticResource Body2}" Margin="0,8,0,0" />
+                    <Grid Margin="0,20,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="8" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Button Style="{StaticResource Btn}" Content="Cancel" Command="{Binding ConfirmCancelCommand}" />
+                        <Button Grid.Column="2" Style="{StaticResource BtnPrimary}" Content="{Binding ConfirmOkText}" Command="{Binding ConfirmOkCommand}" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

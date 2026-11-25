@@ -1,0 +1,247 @@
+{
+  "id": "copilot",
+  "name": "Copilot & AI",
+  "description": "Turn off Copilot, Recall, Click to Do and the AI features in Edge, Paint and Notepad.",
+  "icon": "E734",
+  "kind": "list",
+  "order": 5,
+  "tweaks": [
+    {
+      "id": "copilot.policy",
+      "name": "Turn off Windows Copilot",
+      "summary": "Turns off the Copilot sidebar by policy and hides the taskbar button.",
+      "description": "Sets the Turn off Windows Copilot policy for this user and the PC and hides the Copilot taskbar button. The older built-in Copilot follows this policy. The newer Copilot app does not, so also tick Remove the Copilot app.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "actions": [
+        {
+          "type": "Registry",
+          "hive": "HKCU",
+          "key": "Software\\Policies\\Microsoft\\Windows\\WindowsCopilot",
+          "name": "TurnOffWindowsCopilot",
+          "kind": "DWord",
+          "value": 1
+        },
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsCopilot",
+          "name": "TurnOffWindowsCopilot",
+          "kind": "DWord",
+          "value": 1
+        },
+        {
+          "type": "Registry",
+          "hive": "HKCU",
+          "key": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+          "name": "ShowCopilotButton",
+          "kind": "DWord",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "copilot.app",
+      "name": "Remove the Copilot app",
+      "summary": "Uninstalls the Copilot app for all users.",
+      "description": "Removes the Copilot app packages for every user and for new accounts. The Copilot key on new keyboards then opens search or does nothing.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "appliedLabel": "Not installed",
+      "actions": [
+        {
+          "type": "Appx",
+          "package": "Microsoft.Copilot"
+        },
+        {
+          "type": "Appx",
+          "package": "Microsoft.Windows.Ai.Copilot.Provider"
+        }
+      ]
+    },
+    {
+      "id": "copilot.recall",
+      "name": "Disable Recall",
+      "summary": "Stops Recall from taking snapshots of your screen and removes it.",
+      "description": "Recall saves snapshots of your screen so you can search them later. This turns off snapshots for every user and tells Windows to remove the Recall feature. Only Copilot+ PCs have Recall. On other PCs this changes nothing you can see.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "restart": true,
+      "goodToKnow": "After undo, you may need to add Recall back in Settings > System > Optional features or Windows Features.",
+      "actions": [
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsAI",
+          "name": "DisableAIDataAnalysis",
+          "kind": "DWord",
+          "value": 1
+        },
+        {
+          "type": "Registry",
+          "hive": "HKCU",
+          "key": "Software\\Policies\\Microsoft\\Windows\\WindowsAI",
+          "name": "DisableAIDataAnalysis",
+          "kind": "DWord",
+          "value": 1
+        },
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsAI",
+          "name": "AllowRecallEnablement",
+          "kind": "DWord",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "copilot.click-to-do",
+      "name": "Disable Click to Do",
+      "summary": "Turns off the AI actions overlay on Copilot+ PCs.",
+      "description": "Click to Do looks at what is on your screen and offers AI actions for text and images. This turns it off for every user. Only Copilot+ PCs have it.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "actions": [
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsAI",
+          "name": "DisableClickToDo",
+          "kind": "DWord",
+          "value": 1
+        },
+        {
+          "type": "Registry",
+          "hive": "HKCU",
+          "key": "Software\\Policies\\Microsoft\\Windows\\WindowsAI",
+          "name": "DisableClickToDo",
+          "kind": "DWord",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "id": "copilot.edge",
+      "name": "Turn off Copilot in Microsoft Edge",
+      "summary": "Hides the Copilot sidebar in Edge and stops it reading pages.",
+      "description": "Sets Edge policies that turn off the sidebar (where Copilot lives), stop Copilot from reading the page you are on, and turn off the Compose writing helper.",
+      "risk": "Moderate",
+      "presets": [
+        "privacy",
+        "everything"
+      ],
+      "goodToKnow": "Edge will show \"Your browser is managed by your organization\". That is how Edge shows any policy.",
+      "actions": [
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "name": "HubsSidebarEnabled",
+          "kind": "DWord",
+          "value": 0
+        },
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "name": "CopilotPageContext",
+          "kind": "DWord",
+          "value": 0
+        },
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Policies\\Microsoft\\Edge",
+          "name": "ComposeInlineEnabled",
+          "kind": "DWord",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "copilot.paint",
+      "name": "Turn off AI in Paint",
+      "summary": "Turns off Cocreator, Image Creator, generative fill and generative erase.",
+      "description": "Sets Paint policies that turn off its AI image features. Normal drawing and editing are not affected.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "actions": [
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\Paint",
+          "name": "DisableCocreator",
+          "kind": "DWord",
+          "value": 1
+        },
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\Paint",
+          "name": "DisableImageCreator",
+          "kind": "DWord",
+          "value": 1
+        },
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\Paint",
+          "name": "DisableGenerativeFill",
+          "kind": "DWord",
+          "value": 1
+        },
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\Paint",
+          "name": "DisableGenerativeErase",
+          "kind": "DWord",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "id": "copilot.notepad",
+      "name": "Turn off AI in Notepad",
+      "summary": "Turns off Rewrite, Summarize and other AI features in Notepad.",
+      "description": "Sets the Notepad policy that turns off its AI features. Notepad works as a plain text editor.",
+      "risk": "Safe",
+      "presets": [
+        "recommended",
+        "privacy",
+        "everything"
+      ],
+      "actions": [
+        {
+          "type": "Registry",
+          "hive": "HKLM",
+          "key": "SOFTWARE\\Policies\\WindowsNotepad",
+          "name": "DisableAIFeatures",
+          "kind": "DWord",
+          "value": 1
+        }
+      ]
+    }
+  ]
+}
