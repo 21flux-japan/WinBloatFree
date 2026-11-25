@@ -56,7 +56,7 @@ Options: no automatic restart while signed in, no sharing of update downloads wi
 
 **Copilot & AI** (7). Turn off Windows Copilot, remove the Copilot app, disable Recall and Click to Do, and turn off the AI features in Edge, Paint and Notepad through their official policies.
 
-**Ads & Suggestions** (10). Start menu suggestions, lock screen tips, Settings suggestions, Windows tips and setup prompts, File Explorer ads, Bing in Start search, search highlights, Widgets and news, automatic installs of suggested apps, and suggestion notifications.
+**Ads & Suggestions** (10). Start menu suggestions, lock screen tips, Settings suggestions, Windows tips and setup prompts, File Explorer ads, Bing in Start search, search highlights, Widgets and news (hidden on Windows 11 24H2 and later, because Windows blocks that policy), automatic installs of suggested apps, and suggestion notifications.
 
 **Services** (16). Optional services such as Fax, Downloaded Maps Manager, Retail Demo, Remote Registry, Geolocation, SysMain and Xbox services, each with a clear risk label. Printing, Windows Search and biometrics are listed as Advanced and are not in any preset.
 

@@ -94,7 +94,7 @@ public sealed class Engine
 
     public Detection Detect(Tweak tweak, string? parameterValue = null)
     {
-        if (tweak.Requires == "nvidia" && !_sys.GetNvidiaSetting(0).Available)
+        if (!Requirements.IsMet(tweak.Requires, _sys.Info, _sys.GetNvidiaSetting(0).Available))
             return new Detection(TweakStatus.NotApplicable, Array.Empty<ActionState>());
         if (tweak.Actions.Count == 0) return new Detection(TweakStatus.Off, Array.Empty<ActionState>());
 
@@ -259,13 +259,13 @@ public sealed class Engine
             string? pv = null;
             parameters?.TryGetValue(tweak.Id, out pv);
             var ctx = new ResolveContext(_sys.Info, DateTime.UtcNow, pv ?? tweak.Parameter?.Default);
-            bool nvidiaMissing = tweak.Requires == "nvidia" && !_sys.GetNvidiaSetting(0).Available;
+            bool unmet = !Requirements.IsMet(tweak.Requires, _sys.Info, _sys.GetNvidiaSetting(0).Available);
             for (int i = 0; i < tweak.Actions.Count; i++)
             {
                 var a = tweak.Actions[i];
                 progress?.Report(new ApplyProgress(done, total, $"{tweak.Name}: {Target(a)}"));
                 var entry = NewEntry(tweak, i, a);
-                if (nvidiaMissing) { entry.Result = EntryResult.Skipped; entry.Message = "No NVIDIA driver found."; }
+                if (unmet) { entry.Result = EntryResult.Skipped; entry.Message = Requirements.SkipMessage(tweak.Requires); }
                 else
                 {
                     try { ApplyAction(a, entry, ctx); }

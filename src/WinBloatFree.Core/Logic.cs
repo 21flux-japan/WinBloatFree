@@ -8,11 +8,12 @@ public static class Presets
     /// Pure: which tweak ids a preset selects. In every exclusive group exactly one
     /// option is chosen: the one in the preset, otherwise the group's "leave as is".
     /// </summary>
-    public static HashSet<string> Select(TweakCatalog catalog, Preset preset)
+    public static HashSet<string> Select(TweakCatalog catalog, Preset preset, Func<Tweak, bool>? include = null)
     {
+        bool ok(Tweak t) => include?.Invoke(t) ?? true;
         var ids = new HashSet<string>(StringComparer.Ordinal);
         if (preset == Preset.Custom) return ids;
-        foreach (var t in catalog.Tweaks.Where(t => t.Group is null && t.InPreset(preset))) ids.Add(t.Id);
+        foreach (var t in catalog.Tweaks.Where(t => t.Group is null && t.InPreset(preset) && ok(t))) ids.Add(t.Id);
         foreach (var g in catalog.Tweaks.Where(t => t.Group is not null).GroupBy(t => t.Group))
         {
             var pick = g.FirstOrDefault(t => t.InPreset(preset)) ?? g.First(t => t.Actions.Count == 0);
@@ -24,9 +25,9 @@ public static class Presets
     /// <summary>
     /// A default preset, with exclusive-group options replaced by the level already in place on this PC, if any.
     /// </summary>
-    public static HashSet<string> SelectDefault(TweakCatalog catalog, Preset baseline, Func<Tweak, TweakStatus> status)
+    public static HashSet<string> SelectDefault(TweakCatalog catalog, Preset baseline, Func<Tweak, TweakStatus> status, Func<Tweak, bool>? include = null)
     {
-        var ids = Select(catalog, baseline);
+        var ids = Select(catalog, baseline, include);
         foreach (var g in catalog.Tweaks.Where(t => t.Group is not null).GroupBy(t => t.Group!))
         {
             var applied = g.FirstOrDefault(t => t.Actions.Count > 0 && status(t) == TweakStatus.Off);
@@ -38,10 +39,10 @@ public static class Presets
     }
 
     /// <summary>Pure: the preset that matches a selection exactly, or Custom.</summary>
-    public static Preset Match(TweakCatalog catalog, IReadOnlySet<string> selected)
+    public static Preset Match(TweakCatalog catalog, IReadOnlySet<string> selected, Func<Tweak, bool>? include = null)
     {
         foreach (var p in new[] { Preset.Recommended, Preset.Privacy, Preset.Everything })
-            if (Select(catalog, p).SetEquals(selected)) return p;
+            if (Select(catalog, p, include).SetEquals(selected)) return p;
         return Preset.Custom;
     }
 }

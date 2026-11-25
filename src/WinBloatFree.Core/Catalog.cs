@@ -95,6 +95,7 @@ public static class CatalogValidator
             CheckText(errors, t.Id, t.Name, t.Summary, t.Description, t.GoodToKnow, t.Undo, t.Warning, t.AppliedLabel);
             foreach (var p in t.Presets)
                 if (!KnownPresets.Contains(p, StringComparer.OrdinalIgnoreCase)) errors.Add($"{t.Id}: unknown preset {p}.");
+            if (!Requirements.IsKnown(t.Requires)) errors.Add($"{t.Id}: unknown requires {t.Requires}.");
             if (t.Actions.Count == 0 && t.Group is null) errors.Add($"{t.Id}: no actions.");
             for (int i = 0; i < t.Actions.Count; i++) ValidateAction(errors, $"{t.Id}[{i}]", t.Actions[i]);
             if (t.Parameter is { } prm && (prm.Options.Count == 0 || !prm.Options.Any(o => o.Value == prm.Default)))

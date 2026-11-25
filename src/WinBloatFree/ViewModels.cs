@@ -126,7 +126,7 @@ public sealed class TweakVM : Observable
         set
         {
             _detection = value;
-            Raise(nameof(Detection), nameof(Status), nameof(StatusText), nameof(StatusMuted), nameof(IsAvailable), nameof(Changes), nameof(ShowLevelStatus), nameof(ShowPartialParts), nameof(PartialHint));
+            Raise(nameof(Detection), nameof(Status), nameof(StatusText), nameof(StatusMuted), nameof(IsAvailable), nameof(IsListed), nameof(Changes), nameof(ShowLevelStatus), nameof(ShowPartialParts), nameof(PartialHint));
         }
     }
 
@@ -138,6 +138,9 @@ public sealed class TweakVM : Observable
     public bool ShowLevelRisk => IsLevel && !IsLeaveAsIs && !HasParameter;
 
     public bool IsAvailable => Status is not (TweakStatus.NotPresent or TweakStatus.NotApplicable or TweakStatus.CheckFailed);
+
+    /// <summary>False when this tweak does not apply and should be hidden (for example a build limit).</summary>
+    public bool IsListed => Status != TweakStatus.NotApplicable || !Requirements.HideWhenUnmet(Tweak.Requires);
 
     public bool StatusMuted => Status is TweakStatus.Off or TweakStatus.NotPresent or TweakStatus.NotApplicable or TweakStatus.CheckFailed;
 
@@ -206,7 +209,7 @@ public sealed class CategoryVM : Observable
 
     public bool IsActive { get => _isActive; set => Set(ref _isActive, value); }
 
-    IEnumerable<TweakVM> Countable => Tweaks.Where(t => !t.IsLeaveAsIs);
+    IEnumerable<TweakVM> Countable => Tweaks.Where(t => !t.IsLeaveAsIs && t.IsListed);
     public int Selected => Countable.Count(t => t.IsChecked && t.IsAvailable);
     public string CountSelected => Selected.ToString(CultureInfo.InvariantCulture);
     public string CountTotal => "/" + Countable.Count().ToString(CultureInfo.InvariantCulture);

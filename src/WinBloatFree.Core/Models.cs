@@ -108,7 +108,7 @@ public sealed class Tweak
     public string? Undo { get; set; }
     /// <summary>Red warning shown when the tweak is selected.</summary>
     public string? Warning { get; set; }
-    /// <summary>Optional hardware/OS requirement: "nvidia".</summary>
+    /// <summary>Optional hardware/OS requirement: "nvidia", or a build limit such as "build&lt;26100".</summary>
     public string? Requires { get; set; }
     /// <summary>Label when the tweak is applied ("Already off" by default).</summary>
     public string? AppliedLabel { get; set; }

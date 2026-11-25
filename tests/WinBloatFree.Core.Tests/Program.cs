@@ -517,7 +517,42 @@ static class Tests
             RunSummary.PlainError("Attempted to perform an unauthorized operation."));
     }
 
+    public static void WidgetsNotApplicableOnWindows11_24H2AndNewer()
+    {
+        var t = Catalog.Find("ads.widgets")!;
+        Assert.Equal("build<26100", t.Requires);
+        Assert.True(Requirements.HideWhenUnmet(t.Requires));
+        Assert.True(Requirements.IsKnown(t.Requires));
+        Assert.True(!Requirements.HideWhenUnmet("nvidia"));
+
+        var win10 = new SystemInfo(19045, 0, "22H2", "Home");
+        var win11Old = new SystemInfo(22631, 0, "23H2", "Pro");
+        var win11_24h2 = new SystemInfo(26100, 1, "24H2", "Home");
+        var win11_25h2 = new SystemInfo(26200, 9974, "25H2", "Home");
+        Assert.True(Requirements.IsMet(t.Requires, win10, true));
+        Assert.True(Requirements.IsMet(t.Requires, win11Old, true));
+        Assert.True(!Requirements.IsMet(t.Requires, win11_24h2, true));
+        Assert.True(!Requirements.IsMet(t.Requires, win11_25h2, true));
+
+        var hidden = new Engine(new FakeSystem { Info = win11_25h2 }).Detect(t);
+        Assert.Equal(TweakStatus.NotApplicable, hidden.Status);
+        var run = new Engine(new FakeSystem { Info = win11_25h2 }).Apply(new[] { t }, null, "test");
+        Assert.Equal(0, run.ChangedCount);
+        Assert.Equal(EntryResult.Skipped, run.Entries[0].Result);
+        Assert.True(run.Entries[0].Message!.Contains("Windows version"));
+
+        Assert.Equal(TweakStatus.On, new Engine(new FakeSystem { Info = win10 }).Detect(t).Status);
+        Assert.Equal(TweakStatus.On, new Engine(new FakeSystem { Info = win11Old }).Detect(t).Status);
+
+        bool include(Tweak x) => Requirements.IsMet(x.Requires, win11_25h2, nvidiaAvailable: true);
+        var rec = Presets.Select(Catalog, Preset.Recommended, include);
+        Assert.True(!rec.Contains("ads.widgets"), "hidden from Recommended on 25H2");
+        Assert.Equal(Preset.Recommended, Presets.Match(Catalog, rec, include));
+        Assert.True(Presets.Select(Catalog, Preset.Recommended).Contains("ads.widgets"), "still in the catalog preset for older Windows");
+    }
+
     static string FindRoot()
+
     {
         var d = new DirectoryInfo(AppContext.BaseDirectory);
         while (d is not null && !File.Exists(Path.Combine(d.FullName, "WinBloatFree.sln"))) d = d.Parent;

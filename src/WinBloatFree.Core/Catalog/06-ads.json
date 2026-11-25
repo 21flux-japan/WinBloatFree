@@ -261,7 +261,7 @@
         "everything"
       ],
       "restart": true,
-      "goodToKnow": "On some Windows 11 versions, Windows blocks apps from changing this policy. If Apply cannot change it, turn Widgets off in Settings > Personalization > Taskbar.",
+      "requires": "build<26100",
       "actions": [
         {
           "type": "Registry",

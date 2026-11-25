@@ -111,9 +111,10 @@ public sealed class MainViewModel : Observable
         CurrentCategory = c;
         PageTitle = c.Name;
         PageSubtitle = c.Description;
-        VisibleTweaks.ReplaceAll(c.IsUpdates ? Enumerable.Empty<TweakVM>() : c.Tweaks);
+        VisibleTweaks.ReplaceAll(c.IsUpdates ? Enumerable.Empty<TweakVM>() : c.Tweaks.Where(t => t.IsListed));
         SetView(c.IsUpdates ? "updates" : "list");
-        Focus(c.IsUpdates ? c.Levels.FirstOrDefault(t => t.IsChecked) ?? c.Tweaks.First() : c.Tweaks.FirstOrDefault(t => t.IsAvailable) ?? c.Tweaks.First());
+        var listed = c.Tweaks.Where(t => t.IsListed).ToList();
+        Focus(c.IsUpdates ? c.Levels.FirstOrDefault(t => t.IsChecked) ?? c.Tweaks.First() : listed.FirstOrDefault(t => t.IsAvailable) ?? listed.FirstOrDefault() ?? c.Tweaks.First());
     }
 
     void ShowHistory()
@@ -150,7 +151,7 @@ public sealed class MainViewModel : Observable
                 return;
             }
             var q = _searchText.Trim();
-            var hits = _byId.Values.Where(t => !t.IsLeaveAsIs && (Has(t.Name, q) || Has(t.Summary, q) || Has(t.Description, q) || t.Tweak.Actions.Any(a => Has(Engine.Target(a), q)))).ToList();
+            var hits = _byId.Values.Where(t => t.IsListed && !t.IsLeaveAsIs && (Has(t.Name, q) || Has(t.Summary, q) || Has(t.Description, q) || t.Tweak.Actions.Any(a => Has(Engine.Target(a), q)))).ToList();
             foreach (var x in Categories) x.IsActive = false;
             VisibleTweaks.ReplaceAll(hits);
             PageTitle = "Search results";
@@ -193,7 +194,7 @@ public sealed class MainViewModel : Observable
     void ApplyPreset(Preset p)
     {
         if (p == Preset.Custom) { Preset = p; return; }
-        var ids = Presets.Select(_catalog, p);
+        var ids = Presets.Select(_catalog, p, IncludeInPresets);
         _suppress = true;
         foreach (var t in _byId.Values) t.SetChecked(ids.Contains(t.Id));
         _suppress = false;
@@ -201,24 +202,26 @@ public sealed class MainViewModel : Observable
         OnSelectionChanged();
     }
 
+    bool IncludeInPresets(Tweak t) => !_byId.TryGetValue(t.Id, out var vm) || vm.IsListed;
+
     internal void OnChecked(TweakVM t)
     {
         if (t.IsLevel && t.IsChecked)
             foreach (var other in _byId.Values.Where(o => o.Tweak.Group == t.Tweak.Group && o != t)) other.SetChecked(false);
         Focus(t);
         if (_suppress) return;
-        Preset = Presets.Match(_catalog, SelectedIds());
+        Preset = Presets.Match(_catalog, SelectedIds(), IncludeInPresets);
         OnSelectionChanged();
     }
 
-    HashSet<string> SelectedIds() => _byId.Values.Where(t => t.IsChecked).Select(t => t.Id).ToHashSet();
+    HashSet<string> SelectedIds() => _byId.Values.Where(t => t.IsChecked && t.IsListed).Select(t => t.Id).ToHashSet();
 
     void SetAllVisible(bool on)
     {
         _suppress = true;
         foreach (var t in VisibleTweaks.Where(t => t.IsAvailable && !t.IsLevel)) t.SetChecked(on);
         _suppress = false;
-        Preset = Presets.Match(_catalog, SelectedIds());
+        Preset = Presets.Match(_catalog, SelectedIds(), IncludeInPresets);
         OnSelectionChanged();
     }
 
@@ -302,8 +305,28 @@ public sealed class MainViewModel : Observable
             _appliedStartupSelection = true;
         }
         RefreshRestoreState();
+        RefreshVisibleList();
         StatusLine = "Already applied changes are skipped";
         OnSelectionChanged();
+    }
+
+    void RefreshVisibleList()
+    {
+        if (_view == "search" && _searchText.Trim().Length > 0)
+        {
+            var q = _searchText.Trim();
+            VisibleTweaks.ReplaceAll(_byId.Values.Where(t => t.IsListed && !t.IsLeaveAsIs && (Has(t.Name, q) || Has(t.Summary, q) || Has(t.Description, q) || t.Tweak.Actions.Any(a => Has(Engine.Target(a), q)))));
+            return;
+        }
+        if (_view == "list" && CurrentCategory is { IsUpdates: false } c)
+        {
+            VisibleTweaks.ReplaceAll(c.Tweaks.Where(t => t.IsListed));
+            if (FocusedTweak is { IsListed: false })
+            {
+                var next = VisibleTweaks.FirstOrDefault(t => t.IsAvailable) ?? VisibleTweaks.FirstOrDefault();
+                if (next is not null) Focus(next);
+            }
+        }
     }
 
     bool _appliedStartupSelection;
@@ -311,12 +334,12 @@ public sealed class MainViewModel : Observable
     void ApplyStartupSelection()
     {
         SyncPauseLengthFromDetection();
-        var ids = Presets.SelectDefault(_catalog, Preset.Recommended, t => _byId[t.Id].Status);
+        var ids = Presets.SelectDefault(_catalog, Preset.Recommended, t => _byId[t.Id].Status, IncludeInPresets);
         _suppress = true;
         foreach (var t in _byId.Values) t.SetChecked(ids.Contains(t.Id));
         foreach (var t in _byId.Values.Where(t => !t.IsAvailable && t.IsChecked && !t.IsLevel)) t.SetChecked(false);
         _suppress = false;
-        Preset = Presets.Match(_catalog, SelectedIds());
+        Preset = Presets.Match(_catalog, SelectedIds(), IncludeInPresets);
     }
 
     void SyncPauseLengthFromDetection()
