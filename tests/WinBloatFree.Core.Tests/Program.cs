@@ -604,9 +604,13 @@ static class Tests
 
     public static void AboutTextIsInTheReadme()
     {
-        var readme = File.ReadAllText(Path.Combine(FindRoot(), "README.md"));
+        static string Lines(string s) => s.Replace("
+", "
+").Replace('', '
+');
+        var readme = Lines(File.ReadAllText(Path.Combine(FindRoot(), "README.md")));
         Assert.True(readme.Contains(About.Title), "README has the heading");
-        Assert.True(readme.Contains(About.Body), "README has the same wording");
+        Assert.True(readme.Contains(Lines(About.Body)), "README has the same wording");
     }
 
     public static void DetectAllMatchesSequentialAndLoadsAppxOnce()
