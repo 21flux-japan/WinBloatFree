@@ -13,7 +13,7 @@
     <AssemblyName>WinBloatFree</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
-    <Version>0.1.2</Version>
+    <Version>0.1.3</Version>
     <Product>WinBloatFree</Product>
     <Company>21 FLUX</Company>
     <Copyright>Copyright (c) 2026 Michael (21 FLUX). MIT License.</Copyright>
