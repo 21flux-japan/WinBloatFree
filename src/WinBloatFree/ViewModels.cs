@@ -231,6 +231,8 @@ public sealed class EntryVM
     };
     public string Message => Entry.Undone ? Entry.UndoMessage ?? "" : (Entry.UndoMessage ?? Entry.Message ?? "");
     public bool IsFailed => Entry.Result == EntryResult.Failed;
+    public IReadOnlyList<StoreLink> StoreLinks => WinBloatFree.Core.StoreLinks.ForEntry(Entry);
+    public bool HasStoreLinks => StoreLinks.Count > 0;
 }
 
 public sealed class RunVM : Observable

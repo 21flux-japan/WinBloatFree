@@ -53,6 +53,9 @@ public sealed class MainViewModel : Observable
         RestartNowCommand = new RelayCommand(AskRestart, () => !IsBusy && IsResultDone && ResultNeedsRestart);
         OpenRepoCommand = new RelayCommand(() => OpenUrl(RepoUrl));
         OpenIssuesCommand = new RelayCommand(() => OpenUrl(RepoUrl + "/issues"));
+        OpenAboutCommand = new RelayCommand(() => IsAboutOpen = true);
+        CloseAboutCommand = new RelayCommand(() => IsAboutOpen = false);
+        OpenStoreCommand = new RelayCommand(p => { if (p is string u && StoreLinks.IsStoreUri(u)) OpenUrl(u); });
         OpenHistoryFolderCommand = new RelayCommand(() => OpenFolder(_store.Directory));
         RefreshCommand = new RelayCommand(async () => await DetectAllAsync(), () => !IsBusy);
         ToggleThemeCommand = new RelayCommand(() => IsDark = !IsDark);
@@ -406,9 +409,11 @@ public sealed class MainViewModel : Observable
     public ObservableList<string> ResultLines { get; } = new();
     public ObservableList<string> ResultAlreadyDone { get; } = new();
     public ObservableList<string> ResultDetails { get; } = new();
+    public ObservableList<StoreLink> ResultStoreLinks { get; } = new();
     public bool HasResultFailures => ResultLines.Count > 0;
     public bool HasResultAlreadyDone => ResultAlreadyDone.Count > 0;
     public bool HasResultDetails => ResultDetails.Count > 0;
+    public bool HasResultStoreLinks => ResultStoreLinks.Count > 0;
     bool _resultNeedsRestart;
     public bool ResultNeedsRestart
     {
@@ -427,15 +432,17 @@ public sealed class MainViewModel : Observable
         ResultLines.ReplaceAll(Array.Empty<string>());
         ResultAlreadyDone.ReplaceAll(Array.Empty<string>());
         ResultDetails.ReplaceAll(Array.Empty<string>());
-        Raise(nameof(HasResultFailures), nameof(HasResultAlreadyDone), nameof(HasResultDetails));
+        ResultStoreLinks.ReplaceAll(Array.Empty<StoreLink>());
+        Raise(nameof(HasResultFailures), nameof(HasResultAlreadyDone), nameof(HasResultDetails), nameof(HasResultStoreLinks));
     }
 
-    void SetResultLists(IEnumerable<string> failures, IEnumerable<string>? alreadyDone = null, IEnumerable<string>? details = null)
+    void SetResultLists(IEnumerable<string> failures, IEnumerable<string>? alreadyDone = null, IEnumerable<string>? details = null, IEnumerable<StoreLink>? storeLinks = null)
     {
         ResultLines.ReplaceAll(failures);
         ResultAlreadyDone.ReplaceAll(alreadyDone ?? Array.Empty<string>());
         ResultDetails.ReplaceAll(details ?? Array.Empty<string>());
-        Raise(nameof(HasResultFailures), nameof(HasResultAlreadyDone), nameof(HasResultDetails));
+        ResultStoreLinks.ReplaceAll(storeLinks ?? Array.Empty<StoreLink>());
+        Raise(nameof(HasResultFailures), nameof(HasResultAlreadyDone), nameof(HasResultDetails), nameof(HasResultStoreLinks));
     }
 
     async Task ApplyAsync()
@@ -555,7 +562,7 @@ public sealed class MainViewModel : Observable
         bool apps = r.Run.Entries.Any(e => e.Result == EntryResult.Changed && !e.Undone && e.Type == ActionType.Appx);
         Confirm($"Undo the run from {r.Title}?",
             $"This puts back {n} saved value{(n == 1 ? "" : "s")} and settings as they were before that run." +
-            (apps ? " Removed apps cannot be put back offline. You can reinstall them from the Microsoft Store." : ""),
+            (apps ? " Removed apps cannot be put back offline. Use Get it from the Store to open the Microsoft Store page for each one." : ""),
             "Undo", async () => await UndoAsync(r));
     }
 
@@ -577,7 +584,7 @@ public sealed class MainViewModel : Observable
             bool needsRestart = RunSummary.NeedsRestartAfterUndo(r.Run.Entries, id => _catalog.Find(id)?.Restart == true);
             ResultNeedsRestart = needsRestart;
             ResultText = RunSummary.AfterUndo(rep, needsRestart);
-            SetResultLists(rep.Messages);
+            SetResultLists(rep.Messages, storeLinks: StoreLinks.ForEntries(r.Run.Entries));
         }
         catch (Exception ex)
         {
@@ -674,6 +681,13 @@ public sealed class MainViewModel : Observable
     bool _jsonOpen;
     public bool IsJsonOpen { get => _jsonOpen; set => Set(ref _jsonOpen, value); }
 
+    bool _aboutOpen;
+    public bool IsAboutOpen { get => _aboutOpen; set => Set(ref _aboutOpen, value); }
+    public string AboutTitle => About.Title;
+    public string AboutBody => About.Body;
+    public string AboutVersion => "Version " + AppVersion;
+    public string AboutLicense => "Open source under the MIT license";
+
     /// <summary>
     /// Opens a link through Explorer, so the browser does not start with administrator rights.
     /// Only happens when the user clicks a link; the app itself never connects anywhere.
@@ -715,6 +729,9 @@ public sealed class MainViewModel : Observable
     public ICommand OpenRepoCommand { get; }
     public ICommand OpenIssuesCommand { get; }
     public ICommand OpenHistoryFolderCommand { get; }
+    public ICommand OpenAboutCommand { get; }
+    public ICommand CloseAboutCommand { get; }
+    public ICommand OpenStoreCommand { get; }
     public ICommand RefreshCommand { get; }
     public ICommand ToggleThemeCommand { get; }
     public ICommand RestartNowCommand { get; }
@@ -723,6 +740,7 @@ public sealed class MainViewModel : Observable
     public bool CloseTopOverlay()
     {
         if (IsConfirmOpen) { CompleteConfirm(false); return true; }
+        if (IsAboutOpen) { IsAboutOpen = false; return true; }
         if (IsJsonOpen) { IsJsonOpen = false; return true; }
         if (IsResultOpen && IsResultDone) { IsResultOpen = false; return true; }
         if (IsReviewOpen) { IsReviewOpen = false; return true; }

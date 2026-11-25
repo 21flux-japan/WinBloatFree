@@ -473,7 +473,7 @@ public sealed class Engine
                 e.UndoMessage = "Enabled again";
                 return true;
             case ActionType.Appx:
-                e.UndoMessage = $"Apps cannot be put back offline. Reinstall it from the Microsoft Store (search for {AppxDisplay(e)}).";
+                e.UndoMessage = $"Apps cannot be put back offline. Use Get it from the Store to open the Microsoft Store page for {AppxDisplay(e)}.";
                 return false;
             case ActionType.OneDriveUninstall:
                 if (_sys.ReinstallOneDrive()) { e.UndoMessage = "OneDrive setup started."; return true; }

@@ -237,6 +237,7 @@
                     <StackPanel>
                         <TextBlock Style="{StaticResource Caption}" LineHeight="18" Text="Open source under the MIT license. Works offline. Makes no network calls." />
                         <StackPanel Orientation="Horizontal" Margin="-8,4,0,0">
+                            <Button Style="{StaticResource LinkBtn}" FontSize="12" Content="About" Command="{Binding OpenAboutCommand}" />
                             <Button Style="{StaticResource LinkBtn}" FontSize="12" Content="Source code" Command="{Binding OpenRepoCommand}" ToolTip="{x:Static local:MainViewModel.RepoUrl}" />
                             <Button Style="{StaticResource LinkBtn}" FontSize="12" Content="Report an issue" Command="{Binding OpenIssuesCommand}" />
                         </StackPanel>
@@ -386,6 +387,16 @@
                                                                             <TextBlock Text="{Binding Target}" FontFamily="{StaticResource MonoFont}" FontSize="11.5" Foreground="{DynamicResource Text3}" TextWrapping="Wrap" />
                                                                             <TextBlock Text="{Binding Message}" FontSize="12" Foreground="{DynamicResource Text3}" TextWrapping="Wrap"
                                                                                        Visibility="{Binding Message, Converter={StaticResource NotEmptyToVis}}" />
+                                                                            <ItemsControl ItemsSource="{Binding StoreLinks}" Margin="0,6,0,0"
+                                                                                          Visibility="{Binding HasStoreLinks, Converter={StaticResource BoolToVis}}">
+                                                                                <ItemsControl.ItemTemplate>
+                                                                                    <DataTemplate>
+                                                                                        <Button Style="{StaticResource Btn}" Content="Get it from the Store" Height="30" Margin="0,0,0,4" HorizontalAlignment="Left" Padding="12,0"
+                                                                                                Command="{Binding DataContext.OpenStoreCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                                                CommandParameter="{Binding Uri}" ToolTip="{Binding Uri}" />
+                                                                                    </DataTemplate>
+                                                                                </ItemsControl.ItemTemplate>
+                                                                            </ItemsControl>
                                                                         </StackPanel>
                                                                     </Grid>
                                                                     <DataTemplate.Triggers>
@@ -637,6 +648,25 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                     </Expander>
+                    <StackPanel Margin="0,12,0,0" Visibility="{Binding HasResultStoreLinks, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="Reinstall from the Store" Style="{StaticResource SectionLabel}" Margin="0,0,0,6" />
+                        <ItemsControl ItemsSource="{Binding ResultStoreLinks}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,0,0,6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding Name}" FontSize="12.5" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,10,0" />
+                                        <Button Grid.Column="1" Style="{StaticResource Btn}" Content="Get it from the Store" Height="30" Padding="12,0"
+                                                Command="{Binding DataContext.OpenStoreCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding Uri}" ToolTip="{Binding Uri}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
                     <Button Style="{StaticResource BtnPrimary}" Content="Close" HorizontalAlignment="Right" MinWidth="110" Margin="0,16,0,0"
                             Command="{Binding CloseResultCommand}" Visibility="{Binding ShowResultClose, Converter={StaticResource BoolToVis}}" />
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0"
@@ -664,6 +694,22 @@
                     <TextBox Grid.Row="1" Style="{StaticResource CodeBox}" Text="{Binding FocusedTweak.JsonText, Mode=OneWay}" />
                     <Button Grid.Row="2" Style="{StaticResource Btn}" Content="Close" HorizontalAlignment="Right" MinWidth="110" Margin="0,16,0,0" Command="{Binding CloseJsonCommand}" />
                 </Grid>
+            </Border>
+        </Grid>
+
+        <!-- ======================================================== about -->
+        <Grid Grid.Row="1" Grid.RowSpan="2" Background="{DynamicResource Scrim}" Visibility="{Binding IsAboutOpen, Converter={StaticResource BoolToVis}}">
+            <Border Style="{StaticResource DialogFrame}" Width="520">
+                <StackPanel Margin="24,22,24,20">
+                    <TextBlock Text="{Binding AboutTitle}" FontSize="20" FontWeight="SemiBold" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding AboutBody}" Style="{StaticResource Body2}" Margin="0,12,0,0" />
+                    <TextBlock Text="{Binding AboutVersion}" Style="{StaticResource Caption}" Margin="0,16,0,0" />
+                    <TextBlock Text="{Binding AboutLicense}" Style="{StaticResource Caption}" Margin="0,4,0,0" />
+                    <Button Style="{StaticResource LinkBtn}" Content="Source code" Margin="-8,4,0,0" HorizontalAlignment="Left"
+                            Command="{Binding OpenRepoCommand}" ToolTip="{x:Static local:MainViewModel.RepoUrl}" />
+                    <Button Style="{StaticResource BtnPrimary}" Content="Close" HorizontalAlignment="Right" MinWidth="110" Margin="0,16,0,0"
+                            Command="{Binding CloseAboutCommand}" IsCancel="True" />
+                </StackPanel>
             </Border>
         </Grid>
 

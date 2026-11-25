@@ -9,6 +9,10 @@ A small, portable Windows 10 and 11 tool that turns off telemetry, ads, suggesti
 - Every change is saved before it is made and can be undone from Undo / History.
 - Open source under the MIT license.
 
+## Made by 21 FLUX
+
+Windows used to be a good, simple system. Today it comes with apps you didn't ask for, ads, and constant data collection. With so much personal data being leaked and stolen, it's time to take back control. WinBloatFree lets you choose what Windows keeps, and it never collects anything itself.
+
 > **Use at your own risk.** WinBloatFree changes system settings, services and installed apps. It is tested with care, but every PC is different. Prefer a System Restore point when the box is available, read the explanation of each change, and use Undo / History if something does not work the way you want. The software comes with no warranty (see [LICENSE](LICENSE)).
 
 ## How it works

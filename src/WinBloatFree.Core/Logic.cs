@@ -81,7 +81,7 @@ public static class Review
         var types = t.Actions.Select(a => a.Type).Distinct().ToList();
         if (types.Count == 0) return "Nothing is changed, so there is nothing to undo.";
         if (types.Contains(ActionType.Appx))
-            return "The app is removed for all users and for new accounts. Removed apps cannot be put back offline. Reinstall it for free from the Microsoft Store if you want it back.";
+            return "The app is removed for all users and for new accounts. Removed apps cannot be put back offline. Use the Get it from the Store button in Undo / History to open the Microsoft Store page for the app.";
         var parts = new List<string>();
         if (types.Any(x => x is ActionType.Registry or ActionType.RegistryDelete or ActionType.RegistryToken))
             parts.Add("registry values");

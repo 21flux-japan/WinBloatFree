@@ -206,6 +206,10 @@ static class Tests
         var rep = eng.Undo(run);
         Assert.Equal(1, rep.Manual);
         Assert.True(rep.Messages[0].Contains("Microsoft Store"), "points to the Store");
+        Assert.True(rep.Messages[0].Contains("Get it from the Store"), "mentions the button");
+        var links = StoreLinks.ForEntries(run.Entries);
+        Assert.Equal(1, links.Count);
+        Assert.Equal("ms-windows-store://pdp/?PFN=Microsoft.BingNews_8wekyb3d8bbwe", links[0].Uri);
     }
 
     public static void TargetReleaseUsesCurrentVersion()
@@ -268,6 +272,7 @@ static class Tests
         Assert.True(Review.UndoText(Catalog.Find("telemetry.activity-history")!).Contains("registry values"));
         Assert.True(Review.UndoText(Catalog.Find("services.fax")!).Contains("starts services"));
         Assert.True(Review.UndoText(Catalog.Find("apps.tips")!).Contains("Microsoft Store"));
+        Assert.True(Review.UndoText(Catalog.Find("apps.tips")!).Contains("Get it from the Store"));
     }
 
     public static void NoDashesOrNetworkCodeInRepo()
@@ -551,7 +556,61 @@ static class Tests
         Assert.True(Presets.Select(Catalog, Preset.Recommended).Contains("ads.widgets"), "still in the catalog preset for older Windows");
     }
 
+    public static void StoreLinksPreferPfnFromSavedFamilyName()
+    {
+        Assert.Equal("ms-windows-store://pdp/?PFN=Microsoft.Office.OneNote_8wekyb3d8bbwe",
+            StoreLinks.PdpByPfn("Microsoft.Office.OneNote_8wekyb3d8bbwe"));
+        Assert.Equal("ms-windows-store://pdp/?ProductId=9WZDNCRFHVJL",
+            StoreLinks.PdpByProductId("9WZDNCRFHVJL"));
+        Assert.True(StoreLinks.IsStoreUri("ms-windows-store://pdp/?PFN=Microsoft.BingNews_8wekyb3d8bbwe"));
+        Assert.True(!StoreLinks.IsStoreUri("https://example.com"));
+        Assert.True(!StoreLinks.IsStoreUri(null));
+
+        var app = new BackupEntry
+        {
+            Type = ActionType.Appx,
+            Result = EntryResult.Changed,
+            TweakName = "Remove Microsoft News",
+            Package = "Microsoft.BingNews",
+            PreviousAppx = new AppxSnapshot(true, true, new[] { "Microsoft.BingNews" }, new[] { "Microsoft.BingNews_8wekyb3d8bbwe" }),
+        };
+        var links = StoreLinks.ForEntry(app);
+        Assert.Equal(1, links.Count);
+        Assert.Equal("Microsoft News", links[0].Name);
+        Assert.Equal("ms-windows-store://pdp/?PFN=Microsoft.BingNews_8wekyb3d8bbwe", links[0].Uri);
+
+        var many = new BackupEntry
+        {
+            Type = ActionType.Appx,
+            Result = EntryResult.Changed,
+            TweakName = "Remove example apps",
+            PreviousAppx = new AppxSnapshot(true, false,
+                new[] { "App.One", "App.Two" },
+                new[] { "App.One_8wekyb3d8bbwe", "App.Two_8wekyb3d8bbwe", "App.One_8wekyb3d8bbwe" }),
+        };
+        var multi = StoreLinks.ForEntry(many);
+        Assert.Equal(2, multi.Count);
+        Assert.Equal("App.One", multi[0].Name);
+        Assert.Equal("ms-windows-store://pdp/?PFN=App.One_8wekyb3d8bbwe", multi[0].Uri);
+        Assert.Equal("App.Two", multi[1].Name);
+
+        var skipped = new BackupEntry { Type = ActionType.Appx, Result = EntryResult.Skipped, PreviousAppx = app.PreviousAppx };
+        Assert.Equal(0, StoreLinks.ForEntry(skipped).Count);
+        var registry = new BackupEntry { Type = ActionType.Registry, Result = EntryResult.Changed };
+        Assert.Equal(0, StoreLinks.ForEntry(registry).Count);
+        var noFamily = new BackupEntry { Type = ActionType.Appx, Result = EntryResult.Changed, PreviousAppx = AppxSnapshot.None };
+        Assert.Equal(0, StoreLinks.ForEntry(noFamily).Count);
+    }
+
+    public static void AboutTextIsInTheReadme()
+    {
+        var readme = File.ReadAllText(Path.Combine(FindRoot(), "README.md"));
+        Assert.True(readme.Contains(About.Title), "README has the heading");
+        Assert.True(readme.Contains(About.Body), "README has the same paragraph");
+    }
+
     static string FindRoot()
+
 
     {
         var d = new DirectoryInfo(AppContext.BaseDirectory);
