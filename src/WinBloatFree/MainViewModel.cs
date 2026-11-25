@@ -9,7 +9,7 @@ namespace WinBloatFree;
 
 public sealed class MainViewModel : Observable
 {
-    public const string AppVersion = "0.1.0";
+    public const string AppVersion = "0.1.1";
     public const string RepoUrl = "https://github.com/21flux-japan/WinBloatFree";
 
     readonly TweakCatalog _catalog;
