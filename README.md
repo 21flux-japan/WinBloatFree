@@ -114,7 +114,7 @@ dotnet publish src/WinBloatFree -c Release -r win-x64 --self-contained -p:Publis
 
 The result is `artifacts/publish/WinBloatFree.exe`, a single self-contained file of about 70 MB that runs on Windows 10 (version 2004 or later) and Windows 11 without installing .NET. It is large because it carries its own copy of .NET and WPF, compressed.
 
-GitHub Actions builds the same exe on every push and attaches it, with a SHA256 checksum, to every release tagged `v*`.
+GitHub Actions builds the same exe on every push and attaches it, with a SHA256 checksum, to every release tagged `v*`. Once SignPath code signing is enabled, the file attached to a tagged release is the signed exe, and the checksum is computed after signing. See [Code signing policy](#code-signing-policy).
 
 ### Project layout
 
@@ -127,6 +127,28 @@ GitHub Actions builds the same exe on every push and attaches it, with a SHA256 
 ### Dependencies
 
 No third-party packages. The app uses the .NET 8 base library and WPF. The only extra piece is Microsoft's Windows SDK projection (`Microsoft.Windows.SDK.NET.Ref`), which the .NET SDK adds automatically for the Windows 10 target and which gives access to the in-box `PackageManager` API for app removal. It adds about 6 MB to the exe.
+
+## Code signing policy
+
+Free code signing provided by [SignPath.io](https://signpath.io/), certificate by [SignPath Foundation](https://signpath.org/).
+
+Windows release builds of `WinBloatFree.exe` are produced from this repository by GitHub Actions on GitHub-hosted runners. Once the project is accepted by SignPath, those builds are submitted for signing. Only artifacts built from this source are signed. Each signing request is approved by an approver listed below. Signed files show **SignPath Foundation** as the publisher, because the certificate belongs to the foundation.
+
+The full policy, including how signing is wired in CI, is in [CODE_SIGNING.md](CODE_SIGNING.md).
+
+### Team roles
+
+- Authors (committers): [Michael (21 FLUX)](https://github.com/21flux-japan). Trusted to modify the source without additional reviews.
+- Reviewers: [Michael (21 FLUX)](https://github.com/21flux-japan). Every pull request from someone who is not a committer is reviewed before it is merged.
+- Approvers: [Michael (21 FLUX)](https://github.com/21flux-japan). Approves each SignPath signing request before a release is signed.
+
+This is a single-maintainer project, so one person holds all three roles.
+
+### Privacy policy
+
+This program will not transfer any information to other networked systems unless specifically requested by the user or the person installing or operating it.
+
+WinBloatFree makes no network connections and collects nothing. It does not check for updates, and it does not send usage data or crash reports. A browser is opened only when you click "Source code", "Report an issue", or "Get it from the Store".
 
 ## License
 

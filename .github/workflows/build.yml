@@ -9,10 +9,13 @@ on:
 
 permissions:
   contents: write   # needed to attach the exe to a release
+  actions: read     # needed by the SignPath action to read the unsigned artifact
 
 env:
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
   DOTNET_NOLOGO: 1
+  # Empty until the SignPath secret is set; signing steps are skipped until then.
+  SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
 
 jobs:
   build:
@@ -30,6 +33,19 @@ jobs:
       - name: Publish portable exe
         run: dotnet publish src/WinBloatFree -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:ContinuousIntegrationBuild=true -o artifacts/publish
 
+      - name: Check exe product metadata
+        id: version
+        shell: pwsh
+        run: |
+          $info = (Get-Item artifacts/publish/WinBloatFree.exe).VersionInfo
+          Write-Host "ProductName=$($info.ProductName)"
+          Write-Host "ProductVersion=$($info.ProductVersion)"
+          Write-Host "FileVersion=$($info.FileVersion)"
+          Write-Host "CompanyName=$($info.CompanyName)"
+          if ($info.ProductName -ne 'WinBloatFree') { throw "ProductName must be WinBloatFree, got '$($info.ProductName)'" }
+          if ([string]::IsNullOrWhiteSpace($info.ProductVersion)) { throw "ProductVersion is missing" }
+          "product-version=$($info.ProductVersion)" | Out-File -Append -FilePath $env:GITHUB_OUTPUT
+
       - name: Checksum
         shell: pwsh
         run: |
@@ -37,12 +53,52 @@ jobs:
           "$hash  WinBloatFree.exe" | Out-File -Encoding ascii artifacts/publish/WinBloatFree.exe.sha256
           Write-Host "SHA256: $hash"
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload unsigned build
+        id: upload-unsigned-artifact
+        uses: actions/upload-artifact@v4
         with:
           name: WinBloatFree
           path: |
             artifacts/publish/WinBloatFree.exe
             artifacts/publish/WinBloatFree.exe.sha256
+
+      # Signing stays off until SIGNPATH_API_TOKEN is set. After that, only
+      # tagged releases are submitted, because release signing needs a manual
+      # approval in SignPath.
+      - name: Upload unsigned exe for signing
+        id: upload-unsigned-exe
+        if: startsWith(github.ref, 'refs/tags/v') && env.SIGNPATH_API_TOKEN != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: WinBloatFree-unsigned
+          path: artifacts/publish/WinBloatFree.exe
+
+      - name: Submit signing request to SignPath
+        if: startsWith(github.ref, 'refs/tags/v') && env.SIGNPATH_API_TOKEN != ''
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG || 'WinBloatFree' }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG || 'release-signing' }}
+          artifact-configuration-slug: default
+          github-artifact-id: ${{ steps.upload-unsigned-exe.outputs.artifact-id }}
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 7200
+          output-artifact-directory: artifacts/signed
+          parameters: |
+            version: ${{ toJSON(steps.version.outputs.product-version) }}
+
+      - name: Use signed exe and recompute checksum
+        if: startsWith(github.ref, 'refs/tags/v') && env.SIGNPATH_API_TOKEN != ''
+        shell: pwsh
+        run: |
+          $signed = Get-ChildItem -Recurse artifacts/signed -Filter WinBloatFree.exe | Select-Object -First 1
+          if (-not $signed) { throw "SignPath did not return WinBloatFree.exe" }
+          Copy-Item $signed.FullName artifacts/publish/WinBloatFree.exe -Force
+          $hash = (Get-FileHash artifacts/publish/WinBloatFree.exe -Algorithm SHA256).Hash.ToLower()
+          "$hash  WinBloatFree.exe" | Out-File -Encoding ascii artifacts/publish/WinBloatFree.exe.sha256
+          Write-Host "Signed SHA256: $hash"
 
       - name: Attach to release
         if: startsWith(github.ref, 'refs/tags/v')

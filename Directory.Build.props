@@ -2,6 +2,8 @@
   <PropertyGroup>
     <LangVersion>12</LangVersion>
     <Deterministic>true</Deterministic>
+    <!-- Keep ProductVersion equal to Version so SignPath metadata checks stay stable. -->
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <!-- No symbol files in Release output; the exe stays one file. -->
     <DebugType Condition="'$(Configuration)' == 'Release'">none</DebugType>
     <!-- The .NET SDK has its own telemetry for the build tools; it never ends up in the app. CI turns it off too. -->
